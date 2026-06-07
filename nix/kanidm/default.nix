@@ -8,7 +8,10 @@ let
   acmeDir = config.security.acme.certs.${cfg.kanidmHost}.directory;
 in
 {
-  imports = [ ./bootstrap.nix ];
+  imports = [
+    ./bootstrap.nix
+    ./mail-sender.nix
+  ];
 
   services.kanidm = {
     server.enable = true;
