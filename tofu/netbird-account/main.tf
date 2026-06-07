@@ -3,13 +3,26 @@ provider "netbird" {
   token          = var.netbird_api_token
 }
 
-# Groups visible in the NetBird dashboard. Members are added as peers join.
+# Admins group. ("All" is built-in — NetBird auto-creates it for every peer.)
 resource "netbird_group" "admins" {
   name = "admins"
 }
 
-resource "netbird_group" "all" {
-  name = "all"
+# Pull the operator user (luuk) from the live account so we can manage their
+# auto_groups declaratively. The user must have logged in to the dashboard at
+# least once for this lookup to succeed.
+data "netbird_user" "luuk" {
+  email = "me@luukblankenstijn.nl"
+}
+
+# Add luuk to the admins group via their auto_groups. Peers they enrol then
+# inherit the group automatically, so the admins-mesh policy applies.
+resource "netbird_user" "luuk" {
+  email           = data.netbird_user.luuk.email
+  name            = data.netbird_user.luuk.name
+  role            = "owner" # NetBird account owner — first OIDC user gets this
+  is_service_user = false
+  auto_groups     = [netbird_group.admins.id]
 }
 
 # Default-deny policy with a single rule allowing admins-to-admins traffic.

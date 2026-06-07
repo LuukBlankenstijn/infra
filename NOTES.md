@@ -16,6 +16,18 @@ Open per design. Verify from a hosted GitHub runner that `https://netbird.<domai
 ## kanidm CLI command names (1.10.x — verified)
 `nix/kanidm/bootstrap.nix` uses two logins (admin + idm_admin) because rights split across them in 1.10: `admin` holds privilege over `idm_oauth2_client_admins`, `idm_admin` does everything else. Verified working subcommand syntax: `--readwrite` (not `--rw`), `service-account create <name> <display> <entry-managed-by-group>`, `service-account api-token generate --output json` returns `.result` (not `.secret`).
 
+## Phase 2 (`tofu/netbird-account/`) first-apply ritual
+On a fresh deploy the `netbird_user.luuk` resource fails to create with `"idp manager must be enabled to send user invites"` — NetBird v0.71's user-create path requires an IdP manager, which we don't run (`ManagerType: "none"`). One-time bootstrap:
+```sh
+tofu apply                                   # creates group/policy/setup-key, fails on user
+curl -s -H "Authorization: Token $TF_VAR_netbird_api_token" \
+  https://netbird.luukblankenstijn.nl/api/users \
+  | jq -r '.[] | select(.email == "me@luukblankenstijn.nl") | .id'
+tofu import netbird_user.luuk <id-from-above>
+tofu apply                                   # now updates the imported user
+```
+After that, subsequent applies are clean. The same dance is needed for any new operator added to NetBird's user table outside tofu.
+
 ## Reconciler-token handoff
 The bootstrap one-shot writes the external reconciler's API token to `/var/lib/kanidm/reconciler-token` (mode 0400, root-owned) on the host. There is no automation to ship it elsewhere. Plan: SSH in once after first boot, `cat` the file, paste it into the cluster-tier reconciler's secret store. Rotate via the same path. If this becomes painful, expose it through `tofu/netbird-account/` outputs using an `ssh` data source.
 
