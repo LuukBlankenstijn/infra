@@ -1,0 +1,20 @@
+name: nix flake check
+on:
+  pull_request:
+    paths:
+      - "nix/**"
+      - "flake.nix"
+      - "flake.lock"
+      - ".github/workflows/nix-check.yml"
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@v20
+      - uses: DeterminateSystems/magic-nix-cache-action@v8
+      - run: nix flake check
+      - run: nix build .#nixosConfigurations.netbird-host.config.system.build.toplevel --no-link

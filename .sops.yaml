@@ -1,0 +1,10 @@
+keys:
+  - &admin_luuk age14aaw06ykpmrzgp56gyfhu2c0eh4w0k4aavq594tpym7j978hl5cs7qvccc
+  - &host_netbird age1uskcvtwg33aqx8qswqqklpyzft4zd0uf5lthq7y3wz6vgs0kd92s5scch6
+
+creation_rules:
+  - path_regex: secrets/secrets\.ya?ml$
+    key_groups:
+      - age:
+          - *admin_luuk
+          - *host_netbird

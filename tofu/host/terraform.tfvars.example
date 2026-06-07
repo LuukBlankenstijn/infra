@@ -1,0 +1,7 @@
+# Copy to terraform.tfvars (gitignored) or set TF_VAR_* env vars.
+# Keep secrets (hcloud_token, cloudflare_api_token, host_age_key) in env, not here.
+
+domain             = "luukblankenstijn.nl"
+cloudflare_zone_id = "REPLACE_WITH_ZONE_ID"
+
+ssh_pubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHnm7ME9L/KuEGbSbzPJ4uVgsNl579UCCtXAIlWNYq7x"

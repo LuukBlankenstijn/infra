@@ -1,0 +1,55 @@
+name: tofu drift
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [host, netbird-account]
+    defaults:
+      run:
+        working-directory: tofu/${{ matrix.module }}
+    env:
+      AWS_ACCESS_KEY_ID:             ${{ secrets.S3_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY:         ${{ secrets.S3_SECRET_ACCESS_KEY }}
+      TF_STATE_PASSPHRASE:           ${{ secrets.TF_STATE_PASSPHRASE }}
+      TF_VAR_hcloud_token:           ${{ secrets.HCLOUD_TOKEN }}
+      TF_VAR_cloudflare_api_token:   ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      TF_VAR_cloudflare_zone_id:     ${{ vars.CLOUDFLARE_ZONE_ID }}
+      TF_VAR_ssh_pubkey:             ${{ vars.SSH_PUBKEY }}
+      TF_VAR_host_age_key:           ${{ secrets.HOST_AGE_KEY }}
+      TF_VAR_netbird_management_url: ${{ vars.NETBIRD_MANAGEMENT_URL }}
+      TF_VAR_netbird_api_token:      ${{ secrets.NETBIRD_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@v20
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: "1.10.5"
+      - run: tofu init -input=false
+      - id: plan
+        run: |
+          set +e
+          tofu plan -detailed-exitcode -no-color -input=false
+          echo "exit=$?" >> "$GITHUB_OUTPUT"
+      - name: Open drift issue
+        if: steps.plan.outputs.exit == '2'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `drift detected in tofu/${{ matrix.module }}`,
+              body: `Scheduled plan exited 2 — drift present. See run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              labels: ['drift']
+            });

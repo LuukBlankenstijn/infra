@@ -1,0 +1,26 @@
+# Copy to .envrc.local (gitignored) and fill in. direnv loads .envrc.local
+# after .envrc, so these are in your shell whenever you `cd` here.
+
+# Hetzner Object Storage (S3 backend) — read by tofu init/apply
+export AWS_ACCESS_KEY_ID=
+export AWS_SECRET_ACCESS_KEY=
+
+# tofu native state encryption — generate once: `openssl rand -base64 32`
+export TF_STATE_PASSPHRASE=
+
+# Hetzner Cloud + Cloudflare for tofu/host/
+export TF_VAR_hcloud_token=
+export TF_VAR_cloudflare_api_token=
+export TF_VAR_cloudflare_zone_id=
+
+# Operator pubkey — must match nix/_config.nix rootAuthorizedKeys[0]
+export TF_VAR_ssh_pubkey="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHnm7ME9L/KuEGbSbzPJ4uVgsNl579UCCtXAIlWNYq7x"
+
+# Host age key (the PRIVATE key — sops-nix decrypts with this on the box).
+# Generate locally: `age-keygen -o ~/.config/sops/age/netbird-host.txt`,
+# then put the private line here, NOT in git.
+export TF_VAR_host_age_key=
+
+# Only needed for tofu/netbird-account/ after the dashboard is up
+# export TF_VAR_netbird_management_url=https://netbird.luukblankenstijn.nl
+# export TF_VAR_netbird_api_token=

@@ -1,0 +1,36 @@
+# nix
+result
+result-*
+
+# direnv
+.direnv/
+.envrc.local
+
+# opentofu / terraform
+.terraform/
+.terraform.tfstate.lock.info
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# decrypted secrets — only sops-encrypted files are tracked
+*.dec
+*.dec.*
+secrets/decrypted/
+
+# editor
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# claude-code workspace
+.claude/

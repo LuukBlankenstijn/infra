@@ -1,0 +1,40 @@
+name: tofu apply (host)
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "yes" to confirm host OS apply'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tofu-apply-host
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: inputs.confirm == 'yes'
+    runs-on: ubuntu-latest
+    environment: host
+    defaults:
+      run:
+        working-directory: tofu/host
+    env:
+      AWS_ACCESS_KEY_ID:           ${{ secrets.S3_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY:       ${{ secrets.S3_SECRET_ACCESS_KEY }}
+      TF_STATE_PASSPHRASE:         ${{ secrets.TF_STATE_PASSPHRASE }}
+      TF_VAR_hcloud_token:         ${{ secrets.HCLOUD_TOKEN }}
+      TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      TF_VAR_cloudflare_zone_id:   ${{ vars.CLOUDFLARE_ZONE_ID }}
+      TF_VAR_ssh_pubkey:           ${{ vars.SSH_PUBKEY }}
+      TF_VAR_host_age_key:         ${{ secrets.HOST_AGE_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@v20
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: "1.10.5"
+      - run: tofu init -input=false
+      - run: tofu apply -auto-approve -input=false

@@ -1,0 +1,35 @@
+name: tofu apply (netbird-account)
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tofu/netbird-account/**"
+      - ".github/workflows/tofu-apply.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tofu-apply-netbird-account
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: netbird-account
+    defaults:
+      run:
+        working-directory: tofu/netbird-account
+    env:
+      AWS_ACCESS_KEY_ID:             ${{ secrets.S3_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY:         ${{ secrets.S3_SECRET_ACCESS_KEY }}
+      TF_STATE_PASSPHRASE:           ${{ secrets.TF_STATE_PASSPHRASE }}
+      TF_VAR_netbird_management_url: ${{ vars.NETBIRD_MANAGEMENT_URL }}
+      TF_VAR_netbird_api_token:      ${{ secrets.NETBIRD_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: "1.10.5"
+      - run: tofu init -input=false
+      - run: tofu apply -auto-approve -input=false
