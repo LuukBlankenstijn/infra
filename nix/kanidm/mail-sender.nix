@@ -34,7 +34,9 @@ in
       "kanidm-bootstrap-reconciler.service"
     ];
     wants = [ "network-online.target" ];
-    requires = [ "kanidm-bootstrap-reconciler.service" ];
+    requires = [
+      "kanidm-bootstrap-reconciler.service"
+    ];
     wantedBy = [ "multi-user.target" ];
 
     serviceConfig = {
@@ -61,8 +63,8 @@ in
       instance_url = "https://${cfg.kanidmHost}"
       mail_from_address = "auth@${cfg.domain}"
       mail_reply_to_address = "auth@${cfg.domain}"
-      mail_relay = "smtp.protonmail.ch:587"
-      mail_username = "auth@${cfg.domain}"
+      mail_relay = "smtp.protonmail.ch"
+      mail_username = "${cfg.mailUsername}"
       mail_password = "$pw"
       mail_connect_timeout_seconds = 15
       EOF

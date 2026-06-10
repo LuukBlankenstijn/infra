@@ -5,6 +5,7 @@
 
   cloudflareZone = "luukblankenstijn.nl";
   adminEmail = "acme@luukblankenstijn.nl";
+  mailUsername = "auth@luukblankenstijn.nl";
   timeZone = "Europe/Amsterdam";
 
   adminUser = {
