@@ -5,7 +5,7 @@ provider "netbird" {
 
 resource "netbird_account_settings" "this" {
   network_range = "10.16.0.0/16"
-  dns_domain    = "peers.luuk.net"
+  dns_domain    = "peers.luuk.internal"
 }
 
 # Admins group. ("All" is built-in — NetBird auto-creates it for every peer.)
@@ -60,8 +60,8 @@ resource "netbird_setup_key" "admins" {
 }
 
 resource "netbird_dns_zone" "internal" {
-  name                 = "luuk.net"
-  domain               = "luuk.net"
+  name                 = "luuk.internal"
+  domain               = "luuk.internal"
   enabled              = true
   enable_search_domain = true
   distribution_groups  = [netbird_group.admins.id]
