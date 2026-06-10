@@ -2,9 +2,10 @@
   description = "Standalone IdP (kanidm) + NetBird host on Hetzner Cloud";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    # Unstable channel for newer netbird / kanidm. flake.lock pins the exact
+    # commit, so updates are deliberate (nix flake update) — no auto-drift.
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # Secrets management — pinned to the release branch that targets 26.05.
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -85,7 +86,7 @@
 
             shellHook = ''
               echo "infra-base devshell — $(tofu version | head -n1)"
-              echo "nixpkgs:    ${nixpkgs.rev or "dirty"} (nixos-26.05)"
+              echo "nixpkgs:    ${nixpkgs.rev or "dirty"} (nixos-unstable)"
             '';
           };
         }
