@@ -98,5 +98,8 @@ in
   };
 
   security.acme.certs.${cfg.kanidmHost} = { };
-  security.acme.certs.${cfg.netbirdHost} = { };
+  # netbird-relay holds the cert in memory at startup and never reloads, so
+  # ACME has to bounce it on renewal — otherwise the relay keeps serving the
+  # initial minica self-signed cert and clients reject the TLS handshake.
+  security.acme.certs.${cfg.netbirdHost}.reloadServices = [ "netbird-relay.service" ];
 }
