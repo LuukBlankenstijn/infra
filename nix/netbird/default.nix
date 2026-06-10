@@ -18,18 +18,24 @@ in
     domain = cfg.netbirdHost;
     enableNginx = false;
 
-    coturn.enable = false;
+    coturn = {
+      enable = true;
+      passwordFile = config.sops.secrets."netbird/coturn-password".path;
+      # Narrow the firewall opening: only the STUN/TURN listening port. The
+      # default also opens alt-, TLS, and alt-TLS listeners we don't use.
+      openPorts = [ config.services.coturn.listening-port ];
+    };
 
     management = {
-      # required even when coturn is off; set to the netbird domain so any
-      # generated TURN URI is at least syntactically valid (no client will hit it).
-      turnDomain = cfg.netbirdHost;
       # Default 9090 collides with netbird-relay (which binds its own :9090).
       metricsPort = 9092;
       logLevel = "INFO";
       oidcConfigEndpoint = "${kanidmIssuer}/.well-known/openid-configuration";
       settings = {
         IdpManagerConfig.ManagerType = "none";
+        # kanidm 1.10 doesn't ship OAuth2 device authorization grant, so we
+        # can't offer device flow. Headless / SSH machines must enroll with
+        # a setup key from the dashboard; PKCE covers desktop with a browser.
         DeviceAuthorizationFlow.Provider = "none";
 
         PKCEAuthorizationFlow.ProviderConfig = {
@@ -60,9 +66,6 @@ in
         DataStoreEncryptionKey._secret =
           config.sops.secrets."netbird/datastore-encryption-key".path;
 
-        # No coturn — relay handles NAT-traversal for modern peers.
-        TURNConfig.Turns = [ ];
-
         Relay = {
           Addresses = [ "rels://${cfg.netbirdHost}:33080" ];
           CredentialsTTL = "24h";
@@ -80,6 +83,21 @@ in
       AUTH_SILENT_REDIRECT_URI = "/silent-auth";
       NETBIRD_TOKEN_SOURCE = "idToken";
     };
+  };
+
+  # Narrow the TURN media-relay range so the Hetzner Cloud firewall rule
+  # stays a tight ~100-port window instead of the coturn default 16384.
+  services.coturn = {
+    min-port = 49152;
+    max-port = 49251;
+  };
+
+  sops.secrets."netbird/coturn-password" = {
+    owner = "turnserver";
+    restartUnits = [
+      "coturn.service"
+      "netbird-management.service"
+    ];
   };
 
   sops.secrets."netbird/datastore-encryption-key".restartUnits = [

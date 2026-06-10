@@ -45,6 +45,20 @@ resource "hcloud_firewall" "netbird_host" {
     port       = "33080"
     source_ips = ["0.0.0.0/0", "::/0"]
   }
+  # STUN / TURN control channel (coturn).
+  rule {
+    direction  = "in"
+    protocol   = "udp"
+    port       = "3478"
+    source_ips = ["0.0.0.0/0", "::/0"]
+  }
+  # TURN media relay range (narrowed via services.coturn.{min,max}-port).
+  rule {
+    direction  = "in"
+    protocol   = "udp"
+    port       = "49152-49251"
+    source_ips = ["0.0.0.0/0", "::/0"]
+  }
 }
 
 resource "hcloud_server" "netbird_host" {
