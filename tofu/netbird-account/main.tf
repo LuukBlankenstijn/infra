@@ -3,6 +3,11 @@ provider "netbird" {
   token          = var.netbird_api_token
 }
 
+resource "netbird_account_settings" "this" {
+  network_range = "10.16.0.0/16"
+  dns_domain    = "peers.luuk.net"
+}
+
 # Admins group. ("All" is built-in — NetBird auto-creates it for every peer.)
 resource "netbird_group" "admins" {
   name = "admins"
@@ -52,4 +57,12 @@ resource "netbird_setup_key" "admins" {
   usage_limit = 0 # unlimited
 
   auto_groups = [netbird_group.admins.id]
+}
+
+resource "netbird_dns_zone" "internal" {
+  name                 = "luuk.net"
+  domain               = "luuk.net"
+  enabled              = true
+  enable_search_domain = true
+  distribution_groups  = [netbird_group.admins.id]
 }
