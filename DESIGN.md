@@ -7,6 +7,37 @@ re-litigate those.
 
 ---
 
+> ## ⚠️ IdP migrated: kanidm → Zitadel (supersedes the kanidm specifics below)
+>
+> This brief was written for **kanidm**. kanidm 1.10 never shipped the OAuth2 device
+> authorization grant (RFC 8628), which NetBird needs for headless / SSH peer enrollment, so the
+> IdP is now **Zitadel** (NixOS `services.zitadel`, zitadel 2.71.7). The architecture
+> (independence invariant, phased tofu, DNS-only TLS-on-box, sops, external reconciliation) is
+> unchanged; the IdP-specific mechanics below are stale. Deltas:
+>
+> - **§2 / §9 — IdP + state.** Zitadel replaces kanidm. State is now **PostgreSQL** on the box
+>   (peer auth over the unix socket), not kanidm's sqlite — persist `/var/lib/postgresql`
+>   (encrypted with the sops `zitadel/masterkey`; persist masterkey + DB together or neither).
+>   Plus `/var/lib/zitadel` (the bootstrap PAT). Zitadel sends its own SMTP mail → the kanidm
+>   `mail-sender` sidecar is **gone**.
+> - **§5 — bootstrap/external split (most changed).** The `services.kanidm.provision` block and
+>   the on-box CLI bootstrap one-shot no longer exist. Tier 0 provisions only a declarative
+>   `FirstInstance` (org `infra`, admin human, one IAM_OWNER machine user whose **PAT** →
+>   `/var/lib/zitadel/bootstrap-pat`). The NetBird OIDC apps + idp-mgmt service user + roles are
+>   created by a **new in-repo `tofu/zitadel` phase** (official `zitadel/zitadel` provider), which
+>   reads that PAT over SSH and delivers the generated client ids/secret to `/var/lib/netbird-oidc`
+>   (NixOS reads them via the netbird module's `_secret` mechanism). The external cluster-tier
+>   reconciler swaps `seanlatimer/kanidm` → `zitadel/zitadel` (separate repo, out of scope here).
+>   **Everything in §5a–5f about kanidm provider resources / `client_secret` readback / group
+>   resources / the smoke test is kanidm-specific and obsolete.**
+> - **§5e / §11 — ownership.** The NetBird IdP manager is now **enabled** (`ManagerType =
+>   "zitadel"`), so NetBird writes Zitadel users; the `oauth2-secret` patch / `basicSecretFile`
+>   notes are moot. Generated client ids/secrets still differ across rebuilds (still fine).
+> - Operational specifics (phased run order, bootstrap credential, NetBird↔Zitadel OIDC shape,
+>   first-deploy verification items) live in **NOTES.md**.
+
+---
+
 ## 1. Goal & the core invariant
 
 Build a single standalone **Hetzner Cloud** host that runs the **identity provider
@@ -42,13 +73,15 @@ require editing or redeploying Tier 0.
 - **Host OS:** NixOS, flake-based. Import the nixpkgs Hetzner Cloud profile module for the
   virtio/boot/IPv6 plumbing; declare the disk layout with **disko** on top. A cloud VPS is
   uniform virtio hardware, so **no nixos-facter** is needed.
-- **Impermanence:** tmpfs root. Persist only `/nix`, `/boot`, ssh host keys, the kanidm state
-  directory, and `/var/lib/netbird`.
-- **IdP:** kanidm, `kanidmWithSecretProvisioning` build (Kanidm >= 1.8.5 — see §5). Tier 0
-  provisions only its bootstrap-minimal identity content via the NixOS `services.kanidm.provision`
-  block; everything else is external (§5).
+- **Impermanence:** tmpfs root. Persist only `/nix`, `/boot`, ssh host keys, `/var/lib/postgresql`
+  (Zitadel state) + `/var/lib/zitadel`, and `/var/lib/netbird*`. _(was: the kanidm state dir — see
+  the migration banner.)_
+- **IdP:** Zitadel (`services.zitadel`, zitadel 2.71.7) backed by local Postgres. Tier 0
+  provisions only a declarative `FirstInstance` (org + admin + bootstrap machine-user PAT); the
+  NetBird OIDC apps are created by the `tofu/zitadel` phase (§5 banner). _(was: kanidm +
+  `services.kanidm.provision`.)_
 - **NetBird:** the management/control plane runs on this host (NixOS), authenticating against
-  the local kanidm via OIDC. This host **is** the control plane — NOT a peer enrolling against
+  the local Zitadel via OIDC. This host **is** the control plane — NOT a peer enrolling against
   an external management server.
 - **Secrets:** sops-nix. The host's age/ssh key is placed during install via nixos-anywhere
   `--extra-files` so the box can decrypt on first boot.
@@ -309,10 +342,12 @@ reconciler's CI lives in the OTHER repo and gets the kanidm service-account toke
 
 ## 9. Impermanence note
 
-kanidm's sqlite DB cannot live on tmpfs — its state directory MUST be persisted. The host is
-stateful regardless of any secret-handling choice; persistence isn't a regression we introduce,
-it's inherent to running kanidm. Persist the kanidm state dir alongside `/var/lib/netbird`, ssh
-host keys, `/nix`, `/boot`.
+Zitadel's state lives in **PostgreSQL** on the box, which cannot live on tmpfs — `/var/lib/postgresql`
+MUST be persisted (encrypted with the sops `zitadel/masterkey`; persist the DB and the masterkey
+together or neither, else the data is unreadable). The host is stateful regardless of any
+secret-handling choice; persistence is inherent to running the IdP. Persist `/var/lib/postgresql`
++ `/var/lib/zitadel` (bootstrap PAT) alongside `/var/lib/netbird*`, ssh host keys, `/nix`, `/boot`.
+_(was: kanidm's sqlite state dir.)_
 
 ---
 
