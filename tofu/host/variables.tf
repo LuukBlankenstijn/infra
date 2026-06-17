@@ -17,7 +17,7 @@ variable "domain" {
   default = "luukblankenstijn.nl"
 }
 
-variable "kanidm_subdomain" {
+variable "zitadel_subdomain" {
   type    = string
   default = "id"
 }

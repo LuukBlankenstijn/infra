@@ -1,8 +1,8 @@
 locals {
-  kanidm_fqdn  = "${var.kanidm_subdomain}.${var.domain}"
+  zitadel_fqdn = "${var.zitadel_subdomain}.${var.domain}"
   netbird_fqdn = "${var.netbird_subdomain}.${var.domain}"
 
-  hostnames = toset([local.kanidm_fqdn, local.netbird_fqdn])
+  hostnames = toset([local.zitadel_fqdn, local.netbird_fqdn])
 }
 
 provider "hcloud" {
@@ -118,7 +118,7 @@ module "deploy" {
 
   # Build closure locally; remote /nix is now its own ext4 partition with
   # 30 GB, plenty for the copy. Avoids remote /tmp pressure from cargo/go
-  # build dirs (sops-install-secrets, kanidm, etc.).
+  # build dirs (sops-install-secrets, zitadel, etc.).
   build_on_remote = false
 
   depends_on = [
