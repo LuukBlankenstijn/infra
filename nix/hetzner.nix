@@ -6,11 +6,18 @@
 {
   imports = [ (modulesPath + "/profiles/qemu-guest.nix") ];
 
-  # Hetzner Cloud x86 (CX/CPX) instances boot SeaBIOS, not UEFI. Install grub
-  # to the MBR; the 1 MB bios_boot partition in disko.nix holds grub's
-  # core.img since we use a GPT partition table. disko provides the device list.
-  boot.loader.grub.enable = true;
-  boot.loader.grub.efiSupport = false;
+  # Hetzner Cloud firmware differs by instance generation: older types boot
+  # SeaBIOS, newer ones (e.g. cpx22) boot UEFI. Install grub for BOTH — to the
+  # MBR (via the bios_boot partition) and to the ESP. efiInstallAsRemovable
+  # writes the \EFI\BOOT\BOOTX64.EFI fallback so UEFI boots even though Hetzner
+  # doesn't persist EFI NVRAM entries. disko mounts the ESP at /boot.
+  # NOTE: do NOT set grub.device here — disko already populates grub.devices
+  # from the disk; setting device too duplicates it (["/dev/sda","/dev/sda"]).
+  boot.loader.grub = {
+    enable = true;
+    efiSupport = true;
+    efiInstallAsRemovable = true;
+  };
 
   boot.kernelParams = [
     "console=tty1"

@@ -29,7 +29,7 @@ variable "netbird_subdomain" {
 
 variable "server_type" {
   type    = string
-  default = "cx33"
+  default = "cpx22"
 }
 
 variable "server_location" {
