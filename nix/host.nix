@@ -40,7 +40,7 @@
   sops.secrets."acme/cloudflare-token-env" = {
     mode = "0400";
     restartUnits = [
-      "acme-${cfg.kanidmHost}.service"
+      "acme-${cfg.zitadelHost}.service"
       "acme-${cfg.netbirdHost}.service"
     ];
   };

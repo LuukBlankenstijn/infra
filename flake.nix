@@ -1,8 +1,8 @@
 {
-  description = "Standalone IdP (kanidm) + NetBird host on Hetzner Cloud";
+  description = "Standalone IdP (Zitadel) + NetBird host on Hetzner Cloud";
 
   inputs = {
-    # Unstable channel for newer netbird / kanidm. flake.lock pins the exact
+    # Unstable channel for newer netbird / zitadel. flake.lock pins the exact
     # commit, so updates are deliberate (nix flake update) — no auto-drift.
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -51,7 +51,7 @@
           ./nix/hetzner.nix
           ./nix/disko.nix
           ./nix/traefik.nix
-          ./nix/kanidm
+          ./nix/zitadel
           ./nix/netbird
         ];
       };
@@ -73,7 +73,8 @@
               ssh-to-age
               hcloud
               awscli2
-              kanidm_1_10
+              zitadel
+              postgresql
               mkpasswd
               nixpkgs-fmt
               nix-output-monitor

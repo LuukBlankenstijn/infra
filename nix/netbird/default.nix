@@ -4,8 +4,12 @@
   ...
 }:
 let
-  kanidmIssuer = "https://${cfg.kanidmHost}/oauth2/openid/netbird";
-  oauth2SecretFile = "/var/lib/netbird-mgmt/secrets/oidc-client-secret";
+  zitadelIssuer = "https://${cfg.zitadelHost}";
+  # Generated Zitadel client IDs/secret are delivered here by the tofu/zitadel
+  # module (out of band), then read into management.json at preStart via the
+  # netbird module's `_secret` substitution. The host config only references the
+  # stable paths — the values themselves never live in Nix.
+  oidcDir = "/var/lib/netbird-oidc";
 in
 {
   imports = [
@@ -30,41 +34,61 @@ in
       # Default 9090 collides with netbird-relay (which binds its own :9090).
       metricsPort = 9092;
       logLevel = "INFO";
-      oidcConfigEndpoint = "${kanidmIssuer}/.well-known/openid-configuration";
+      oidcConfigEndpoint = "${zitadelIssuer}/.well-known/openid-configuration";
       settings = {
-        IdpManagerConfig.ManagerType = "none";
-        # kanidm 1.10 doesn't ship OAuth2 device authorization grant, so we
-        # can't offer device flow. Headless / SSH machines must enroll with
-        # a setup key from the dashboard; PKCE covers desktop with a browser.
-        DeviceAuthorizationFlow.Provider = "none";
+        # Zitadel IS in NetBird's managed-IdP list, so unlike kanidm we run the
+        # full integration: user sync + invites work, no manual import dance.
+        # The idp-mgmt service user (client_credentials, ORG_USER_MANAGER) is
+        # created by tofu; its id/secret arrive in oidcDir.
+        IdpManagerConfig = {
+          ManagerType = "zitadel";
+          ClientConfig = {
+            Issuer = zitadelIssuer;
+            TokenEndpoint = "${zitadelIssuer}/oauth/v2/token";
+            ClientID._secret = "${oidcDir}/idp-client-id";
+            ClientSecret._secret = "${oidcDir}/idp-client-secret";
+            GrantType = "client_credentials";
+          };
+          ExtraConfig.ManagementEndpoint = "${zitadelIssuer}/management/v1";
+        };
+
+        # The whole point of the migration: Zitadel ships the OAuth2 device
+        # authorization grant, so headless / SSH peers enroll without a setup
+        # key. Provider "hosted" auto-discovers the device/token endpoints.
+        DeviceAuthorizationFlow = {
+          Provider = "hosted";
+          ProviderConfig = {
+            Audience._secret = "${oidcDir}/cli-client-id";
+            ClientID._secret = "${oidcDir}/cli-client-id";
+            Scope = "openid";
+            UseIDToken = true;
+          };
+        };
 
         PKCEAuthorizationFlow.ProviderConfig = {
-          Audience = "netbird";
-          ClientID = "netbird";
-          # Public PKCE client: kanidm expects no client_secret in token req.
-          ClientSecret = "";
-          AuthorizationEndpoint = "https://${cfg.kanidmHost}/ui/oauth2";
-          TokenEndpoint = "https://${cfg.kanidmHost}/oauth2/token";
-          Scope = "openid profile email groups offline_access";
+          Audience._secret = "${oidcDir}/cli-client-id";
+          ClientID._secret = "${oidcDir}/cli-client-id";
+          AuthorizationEndpoint = "${zitadelIssuer}/oauth/v2/authorize";
+          TokenEndpoint = "${zitadelIssuer}/oauth/v2/token";
+          Scope = "openid profile email offline_access";
           # Order matters: CLI clients pick the loopback URL; the dashboard
-          # picks the URL matching its origin. List localhost first to keep
-          # the CLI off the dashboard's /auth handler.
+          # picks the URL matching its origin. Keep localhost first.
           RedirectURLs = [
-            "http://localhost:53000"
-            "https://${cfg.netbirdHost}/auth"
+            "http://localhost:53000/"
+            "http://localhost:54000/"
           ];
           UseIDToken = true;
         };
 
         HttpConfig = {
-          AuthIssuer = kanidmIssuer;
-          AuthAudience = "netbird";
-          AuthUserIDClaim = "sub";
-          AuthKeysLocation = "${kanidmIssuer}/public_key.jwk";
+          AuthIssuer = zitadelIssuer;
+          # Zitadel puts the project id in every token's `aud` (dashboard AND
+          # cli/device), so the project id is the one value that validates both
+          # browser and device-flow tokens. tofu/zitadel delivers it here.
+          AuthAudience._secret = "${oidcDir}/audience";
         };
 
-        DataStoreEncryptionKey._secret =
-          config.sops.secrets."netbird/datastore-encryption-key".path;
+        DataStoreEncryptionKey._secret = config.sops.secrets."netbird/datastore-encryption-key".path;
 
         Relay = {
           Addresses = [ "rels://${cfg.netbirdHost}:33080" ];
@@ -75,14 +99,31 @@ in
     };
 
     dashboard.settings = {
-      AUTH_AUTHORITY = kanidmIssuer;
-      AUTH_CLIENT_ID = "netbird";
-      AUTH_AUDIENCE = "netbird";
-      AUTH_SUPPORTED_SCOPES = "openid profile email groups";
+      AUTH_AUTHORITY = zitadelIssuer;
+      AUTH_SUPPORTED_SCOPES = "openid profile email offline_access";
       AUTH_REDIRECT_URI = "/auth";
       AUTH_SILENT_REDIRECT_URI = "/silent-auth";
       NETBIRD_TOKEN_SOURCE = "idToken";
+      # Zitadel generates the client id, unknown at Nix eval time. Bake a unique
+      # sentinel into the static build; netbird-dashboard-render (dashboard.nix)
+      # sed-replaces it at runtime with the tofu-delivered value.
+      AUTH_CLIENT_ID = "@@NETBIRD_CLIENT_ID@@";
+      AUTH_AUDIENCE = "@@NETBIRD_CLIENT_ID@@";
     };
+  };
+
+  # tofu/zitadel writes the four generated values here over SSH, then restarts
+  # netbird. root-owned (netbird-management runs as root); secret is 0400.
+  systemd.tmpfiles.rules = [
+    "d ${oidcDir} 0750 root root -"
+  ];
+
+  # On a fresh box (before the tofu phase has delivered the IDs) hold the
+  # service instead of crash-looping; the tofu `systemctl restart` re-checks
+  # the condition once the files exist.
+  systemd.services.netbird-management = {
+    after = [ "zitadel.service" ];
+    unitConfig.ConditionPathExists = "${oidcDir}/cli-client-id";
   };
 
   # Narrow the TURN media-relay range so the Hetzner Cloud firewall rule

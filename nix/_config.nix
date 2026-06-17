@@ -1,6 +1,6 @@
 {
   domain = "luukblankenstijn.nl";
-  kanidmHost = "id.luukblankenstijn.nl";
+  zitadelHost = "id.luukblankenstijn.nl";
   netbirdHost = "netbird.luukblankenstijn.nl";
 
   cloudflareZone = "luukblankenstijn.nl";
