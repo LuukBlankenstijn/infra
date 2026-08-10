@@ -24,6 +24,10 @@ resource "netbird_group" "kubernetes_api" {
   name = "kubernetes-api"
 }
 
+resource "netbird_group" "ollama" {
+  name = "ollama"
+}
+
 # Pull the operator user (luuk) from the live account so we can manage their
 # auto_groups declaratively. The user must have logged in to the dashboard at
 # least once for this lookup to succeed.
@@ -98,6 +102,22 @@ resource "netbird_policy" "admins_to_kubernetes_api" {
     protocol      = "all"
     sources       = [netbird_group.admins.id]
     destinations  = [netbird_group.kubernetes_api.id]
+  }
+}
+
+resource "netbird_policy" "admins_to_ollama" {
+  name        = "admins-to-ollama"
+  description = "Admins reach Ollama"
+  enabled     = true
+
+  rule {
+    name          = "admins-to-ollama"
+    enabled       = true
+    action        = "accept"
+    bidirectional = false
+    protocol      = "all"
+    sources       = [netbird_group.admins.id]
+    destinations  = [netbird_group.ollama.id]
   }
 }
 
