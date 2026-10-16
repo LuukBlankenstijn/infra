@@ -1,0 +1,130 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grafana
+  namespace: observability
+spec:
+  releaseName: grafana
+  interval: 1h
+  chart:
+    spec:
+      chart: grafana
+      version: "12.10.4"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana-community
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    replicas: 1
+
+    podAnnotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "3000"
+
+    deploymentStrategy:
+      type: Recreate
+
+    persistence:
+      enabled: false
+
+    envFromSecrets:
+      - name: grafana-db
+      - name: grafana-oidc
+
+    ingress:
+      enabled: false
+
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+          - name: Mimir
+            uid: mimir
+            type: prometheus
+            access: proxy
+            url: http://mimir.observability.svc.cluster.local:8080/prometheus
+            isDefault: true
+            jsonData:
+              prometheusType: Mimir
+              timeInterval: 60s
+          - name: Loki
+            uid: loki
+            type: loki
+            access: proxy
+            url: http://loki.observability.svc.cluster.local:3100
+
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: default
+            orgId: 1
+            folder: ""
+            type: file
+            disableDeletion: true
+            editable: false
+            options:
+              path: /var/lib/grafana/dashboards/default
+
+    dashboards:
+      default:
+        node-exporter-full:
+          gnetId: 1860
+          revision: 45
+        k8s-views-global:
+          gnetId: 15757
+          revision: 43
+        k8s-views-namespaces:
+          gnetId: 15758
+          revision: 46
+        k8s-views-nodes:
+          gnetId: 15759
+          revision: 40
+        k8s-views-pods:
+          gnetId: 15760
+          revision: 41
+
+    grafana.ini:
+      server:
+        root_url: https://grafana.luukblankenstijn.nl
+
+      database:
+        type: postgres
+        ssl_mode: verify-full
+        ca_cert_path: /etc/ssl/certs/ca-certificates.crt
+
+      analytics:
+        reporting_enabled: false
+        check_for_updates: false
+        check_for_plugin_updates: false
+
+      auth:
+        disable_login_form: true
+        signout_redirect_url: https://auth.luukblankenstijn.nl/application/o/grafana/end-session/
+
+      auth.generic_oauth:
+        enabled: true
+        name: Authentik
+        allow_sign_up: true
+        scopes: openid email profile offline_access
+        auth_url: https://auth.luukblankenstijn.nl/application/o/authorize/
+        token_url: https://auth.luukblankenstijn.nl/application/o/token/
+        api_url: https://auth.luukblankenstijn.nl/application/o/userinfo/
+        use_refresh_token: true
+        email_attribute_path: email
+        login_attribute_path: preferred_username
+        name_attribute_path: name
+        role_attribute_path: contains(groups, 'authentik Admins') && 'GrafanaAdmin' || 'Viewer'
+        allow_assign_grafana_admin: true

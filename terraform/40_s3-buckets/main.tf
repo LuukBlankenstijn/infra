@@ -5,6 +5,8 @@ locals {
   buckets = {
     luuk-postgres = { namespace = "postgres", consumer = "postgres" }
     luuk-mariadb  = { namespace = "mariadb", consumer = "mariadb" }
+    luuk-loki     = { namespace = "observability", consumer = "loki" }
+    luuk-mimir    = { namespace = "observability", consumer = "mimir" }
   }
 
   namespaces = toset([for bucket in local.buckets : bucket.namespace])

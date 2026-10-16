@@ -21,6 +21,11 @@ Each root has its own state key, and no root reads another's state. Values one
 root produces for another travel through OpenBao (for example the Authentik
 client for NetBird) or the cluster (for example the provisioner passwords).
 
+`50_pki` has two sensitive outputs, read with
+`tofu -chdir=terraform/50_pki output -json <name>`: `host_approles` (AppRole
+`role_id`/`secret_id` per host) and `phone_certificates` (certificate, key and
+CA chain per phone). See [Observability](../observability/index.md#device-ca).
+
 ## Roots
 
 | Root | State key | Manages | `.envrc` adds |
@@ -29,9 +34,10 @@ client for NetBird) or the cluster (for example the provisioner passwords).
 | `20_cluster-bootstrap` | `cluster-bootstrap/terraform.tfstate` | namespace `sealed-secrets` and the pinned sealing key `sealing-key-pinned`; flux-operator and the FluxInstance, read from `flux/clusters/home/flux-system` | `TF_VAR_sealed_secrets_key` |
 | `30_flux` | - | no configuration; step 30 is Flux reconciling `flux/` | - |
 | `40_openbao-config` | `openbao-config/terraform.tfstate` | mount `secret`: generated secrets and values copied from sops; their policies and `secret-<namespace>` roles | `TF_VAR_bao_jwt`, `TF_VAR_app_secrets`, `TF_VAR_frp_token`, `TF_VAR_netbird_secrets` |
-| `40_s3-buckets` | `s3-buckets/terraform.tfstate` | buckets `luuk-postgres`, `luuk-mariadb`; mount `s3` with their credentials, policies and `s3-<namespace>` roles | `TF_VAR_bao_jwt`, `TF_VAR_s3_access_key_id`, `TF_VAR_s3_secret_access_key` |
+| `40_s3-buckets` | `s3-buckets/terraform.tfstate` | buckets `luuk-postgres`, `luuk-mariadb`, `luuk-loki`, `luuk-mimir`; mount `s3` with their credentials, policies and `s3-<namespace>` roles | `TF_VAR_bao_jwt`, `TF_VAR_s3_access_key_id`, `TF_VAR_s3_secret_access_key` |
 | `40_databases` | `databases/terraform.tfstate` | Postgres and MariaDB roles/users, databases and grants; mounts `postgres` and `mariadb` with credentials, policies and roles | `TF_VAR_bao_jwt` |
-| `50_authentik-config` | `authentik-config/terraform.tfstate` | Authentik OAuth2 provider and application `netbird`; mount `authentik` | `TF_VAR_bao_jwt` |
+| `50_authentik-config` | `authentik-config/terraform.tfstate` | Authentik OAuth2 providers and applications `netbird` and `grafana`; mount `authentik`; policy `authentik-observability-grafana` and role `authentik-observability` | `TF_VAR_bao_jwt` |
+| `50_pki` | `pki/terraform.tfstate` | PKI mounts `pki-devices` (root CA), `pki-hosts` and `pki-phone-<name>` (intermediates), per-host PKI roles, auth mount `approle` with roles `device-<host>`, the phone certificates; `secret/observability/device-ca` with policy `pki-traefik-device-ca` and role `pki-traefik` | `TF_VAR_bao_jwt` |
 | `60_netbird-config` | `netbird-config/terraform.tfstate` | NetBird account settings, groups, policies, DNS zone, Authentik connector, users, setup key `servers-bootstrap` | `TF_VAR_bao_jwt`, `TF_VAR_netbird_token` |
 
 `TF_VAR_bao_jwt` comes from `bao_jwt_export`, see
@@ -45,6 +51,7 @@ client for NetBird) or the cluster (for example the provisioner passwords).
 | `20_cluster-bootstrap` | the [LAN kubeconfig](../cluster/access.md#the-lan-kubeconfig) |
 | `40_openbao-config`, `40_s3-buckets` | OpenBao at `https://openbao.luukblankenstijn.nl`, the LAN kubeconfig for the login token |
 | `40_databases` | OpenBao; the LAN kubeconfig, to read `postgres/postgres-app` and `mariadb/mariadb-provisioner`; `192.168.1.78:5432` and `:3306` |
+| `50_pki` | OpenBao, the LAN kubeconfig for the login token |
 | `50_authentik-config` | OpenBao; Authentik at `https://auth.luukblankenstijn.nl` with the API token from `authentik/authentik-auth` key `AUTHENTIK_BOOTSTRAP_TOKEN`, read through the LAN kubeconfig |
 | `60_netbird-config` | OpenBao (`authentik/netbird/netbird`); NetBird at `https://netbird.luukblankenstijn.nl` |
 
@@ -72,7 +79,8 @@ Applies run from the operator machine on the home LAN; CI never applies.
 3. `40_openbao-config` and `40_s3-buckets` once OpenBao answers. `services` stays
    unready until they have written the frpc token and the bucket credentials.
 4. `40_databases` once Postgres and MariaDB run.
-5. `50_authentik-config` once Authentik runs and its API token exists.
+5. `50_authentik-config` once Authentik runs and its API token exists, and
+   `50_pki` (it writes into the `secret` mount of `40_openbao-config`).
 6. `60_netbird-config` once NetBird runs. `users.tf` applies after the user's
    first Authentik login.
 

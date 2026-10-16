@@ -22,6 +22,7 @@ configure what runs on them.
 | Services published through NetBird | [NetBird reverse proxy](cluster/reverse-proxy.md) |
 | Shared database servers | [Postgres](databases/postgres.md), [MariaDB](databases/mariadb.md) |
 | What is backed up, where, and how to restore | [Backups](databases/backups.md) |
+| Metrics, logs, Grafana, device ingest over mTLS | [Observability](observability/index.md) |
 
 ## Applications
 
@@ -30,6 +31,7 @@ Everything in `flux/50_apps`. Hostnames are under `luukblankenstijn.nl`.
 | App | Host | State |
 | --- | --- | --- |
 | Authentik | `auth` | Postgres `authentik` |
+| Grafana | `grafana`; device ingest on `logs` and `metrics`, mTLS only | Postgres `grafana`; Loki and Mimir in buckets `luuk-loki`, `luuk-mimir` |
 | Grimmory | `grimmory` | MariaDB `grimmory`, Longhorn volumes `data`, `books` |
 | Longhorn UI | `longhorn`, behind Authentik forward auth | - |
 | Minecraft | Traefik entrypoints `minecraft` (25565/tcp) and `voicechat-udp` (24454/udp) on the node | Longhorn volume |

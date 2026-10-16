@@ -1,0 +1,37 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: loki-ingest
+  namespace: observability
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`logs.luukblankenstijn.nl`) && Path(`/loki/api/v1/push`)
+      kind: Rule
+      services:
+        - name: loki
+          port: 3100
+  tls:
+    options:
+      name: device-mtls
+      namespace: traefik
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: mimir-ingest
+  namespace: observability
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`metrics.luukblankenstijn.nl`) && Path(`/api/v1/push`)
+      kind: Rule
+      services:
+        - name: mimir
+          port: 8080
+  tls:
+    options:
+      name: device-mtls
+      namespace: traefik

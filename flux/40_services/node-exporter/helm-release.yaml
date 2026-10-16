@@ -1,0 +1,36 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: node-exporter
+  namespace: node-exporter
+spec:
+  releaseName: node-exporter
+  interval: 1h
+  chart:
+    spec:
+      chart: prometheus-node-exporter
+      version: "4.56.1"
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    hostNetwork: true
+    hostPID: true
+    service:
+      port: 9100
+      targetPort: 9100
+    tolerations:
+      - effect: NoSchedule
+        operator: Exists
+    resources:
+      requests:
+        cpu: 20m
+        memory: 32Mi
+      limits:
+        memory: 128Mi

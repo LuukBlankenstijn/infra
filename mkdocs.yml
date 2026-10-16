@@ -73,5 +73,6 @@ nav:
       - Postgres: databases/postgres.md
       - MariaDB: databases/mariadb.md
       - Backups: databases/backups.md
+  - Observability: observability/index.md
   - OpenTofu:
       - Roots: terraform/roots.md

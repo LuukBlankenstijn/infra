@@ -1,6 +1,7 @@
 locals {
   postgres_databases = {
     authentik      = { namespace = "authentik" }
+    grafana        = { namespace = "observability" }
     netbird        = { namespace = "netbird" }
     netbird_events = { namespace = "netbird" }
     netbird_idp    = { namespace = "netbird" }

@@ -43,7 +43,7 @@ through `auth/kubernetes/login` as `admin`.
 
 ## Mounts
 
-All mounts are KV v2 and owned by one root each:
+The KV v2 mounts are owned by one root each:
 
 | Mount | Root | Contents | Path layout |
 | --- | --- | --- | --- |
@@ -52,6 +52,17 @@ All mounts are KV v2 and owned by one root each:
 | `mariadb` | `40_databases` | MariaDB user credentials | `<namespace>/<database>` |
 | `s3` | `40_s3-buckets` | Hetzner Object Storage credentials per bucket | `<namespace>/<consumer>` |
 | `authentik` | `50_authentik-config` | Authentik OIDC client credentials | `<namespace>/<client>` |
+
+`50_pki` writes one path into `secret` that it owns itself,
+`observability/device-ca`, and owns the PKI mounts and the AppRole auth mount
+(see [Observability](../observability/index.md#device-ca)):
+
+| Mount | Type | Contents |
+| --- | --- | --- |
+| `pki-devices` | PKI | root CA `Home device CA`; signs only the intermediates |
+| `pki-hosts` | PKI | intermediate for host client certificates; one role per host |
+| `pki-phone-<name>` | PKI | one intermediate and one client certificate per phone |
+| `auth/approle` | auth | AppRole `device-<host>` per host, allowed only `pki-hosts/issue/<host>` |
 
 ## Roles and policies
 
@@ -62,8 +73,15 @@ auth role `<mount>-<namespace>` (for example `secret-netbird`,
 in that namespace, carries the policies for that namespace's paths, and issues
 1-hour tokens. A namespace can therefore read its own paths and nothing else.
 
-`authentik` has no Kubernetes role; only `60_netbird-config` reads it, as
-`admin`.
+`authentik` follows the same pattern: `50_authentik-config` creates policy
+`authentik-observability-grafana` and role `authentik-observability` for
+Grafana's client. `authentik/netbird/netbird` has no Kubernetes role; only
+`60_netbird-config` reads it, as `admin`.
+
+`secret/observability/device-ca` is read from namespace `traefik` through role
+`pki-traefik` (policy `pki-traefik-device-ca`), owned by `50_pki`. It is not
+named `secret-traefik` so it cannot collide with a role `40_openbao-config`
+would create for that namespace; the SecretStore using it is `traefik/pki`.
 
 ## Consuming a secret
 
