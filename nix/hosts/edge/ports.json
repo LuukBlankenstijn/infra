@@ -1,0 +1,6 @@
+{
+  "ssh": 22,
+  "frpControl": 7000,
+  "forwardedTcp": [80, 443],
+  "stun": 3478
+}

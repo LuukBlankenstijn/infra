@@ -1,10 +1,6 @@
 { config, ... }:
 let
-  controlPort = 7000;
-  forwardedTcpPorts = [
-    80
-    443
-  ];
+  ports = builtins.fromJSON (builtins.readFile ./ports.json);
 in
 {
   sops.secrets.frp-token = { };
@@ -20,15 +16,15 @@ in
     role = "server";
     environmentFiles = [ config.sops.templates."frps.env".path ];
     settings = {
-      bindPort = controlPort;
+      bindPort = ports.frpControl;
       auth = {
         method = "token";
         token = "{{ .Envs.FRP_TOKEN }}";
       };
       transport.tls.force = true;
-      allowPorts = map (port: { single = port; }) forwardedTcpPorts;
+      allowPorts = map (port: { single = port; }) ports.forwardedTcp;
     };
   };
 
-  networking.firewall.allowedTCPPorts = [ controlPort ] ++ forwardedTcpPorts;
+  networking.firewall.allowedTCPPorts = [ ports.frpControl ] ++ ports.forwardedTcp;
 }

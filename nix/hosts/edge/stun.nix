@@ -1,8 +1,11 @@
-{ config, ... }:
+{ ... }:
+let
+  ports = builtins.fromJSON (builtins.readFile ./ports.json);
+in
 {
   services.coturn = {
     enable = true;
-    listening-port = 3478;
+    listening-port = ports.stun;
     no-tls = true;
     no-dtls = true;
     no-cli = true;
@@ -12,5 +15,5 @@
     '';
   };
 
-  networking.firewall.allowedUDPPorts = [ config.services.coturn.listening-port ];
+  networking.firewall.allowedUDPPorts = [ ports.stun ];
 }
