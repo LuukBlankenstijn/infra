@@ -38,8 +38,17 @@ spec:
               to: websecure
               scheme: https
               permanent: true
+        proxyProtocol:
+          trustedIPs:
+            - 10.42.0.0/16
       websecure:
         asDefault: true
+        proxyProtocol:
+          trustedIPs:
+            - 10.42.0.0/16
+        transport:
+          respondingTimeouts:
+            readTimeout: 0
       minecraft:
         port: 25565
         exposedPort: 25565
