@@ -5,6 +5,8 @@ metadata:
   namespace: vaultwarden
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels: { app: vaultwarden }
   template:
@@ -16,22 +18,26 @@ spec:
           image: vaultwarden/server:1.37.4
           ports:
             - containerPort: 80
+          env:
+            - name: DOMAIN
+              value: https://vaultwarden.luukblankenstijn.nl
+            - name: SIGNUPS_ALLOWED
+              value: "false"
+            - name: SMTP_HOST
+              value: smtp.protonmail.ch
+            - name: SMTP_PORT
+              value: "587"
+            - name: SMTP_SECURITY
+              value: starttls
+            - name: SMTP_FROM
+              value: vaultwarden@luukblankenstijn.nl
+            - name: SMTP_USERNAME
+              value: vaultwarden@luukblankenstijn.nl
           envFrom:
             - secretRef:
-                name: config
-          env:
-            - name: PG_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: vaultwarden-pg-creds
-                  key: username
-            - name: PG_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: vaultwarden-pg-creds
-                  key: password
-            - name: DATABASE_URL
-              value: "postgresql://$(PG_USERNAME):$(PG_PASSWORD)@postgres-rw.cnpg.svc.cluster.local:5432/vaultwarden"
+                name: vaultwarden-db
+            - secretRef:
+                name: vaultwarden-smtp
           volumeMounts:
             - name: data
               mountPath: /data

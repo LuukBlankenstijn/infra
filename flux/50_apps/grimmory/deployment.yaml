@@ -5,24 +5,31 @@ metadata:
   namespace: grimmory
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels: { app: grimmory }
   template:
     metadata:
       labels: { app: grimmory }
     spec:
-      initContainers:
-        - name: wait-for-mariadb
-          image: busybox:1.38
-          command: ["sh", "-c", "until nc -z mariadb 3306; do sleep 2; done"]
       containers:
         - name: grimmory
           image: grimmory/grimmory:v3.5.0
           ports:
             - containerPort: 6060
+          env:
+            - name: BOOKLORE_PORT
+              value: "6060"
+            - name: USER_ID
+              value: "1000"
+            - name: GROUP_ID
+              value: "1000"
+            - name: TZ
+              value: Europe/Amsterdam
           envFrom:
             - secretRef:
-                name: grimmory-env
+                name: grimmory-db
           volumeMounts:
             - name: data
               mountPath: /app/data
@@ -33,9 +40,9 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: grimmory-data
+            claimName: data
         - name: books
           persistentVolumeClaim:
-            claimName: grimmory-books
+            claimName: books
         - name: bookdrop
           emptyDir: {}

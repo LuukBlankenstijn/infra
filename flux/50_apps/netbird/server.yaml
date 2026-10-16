@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+  namespace: netbird
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: netbird-server
+  template:
+    metadata:
+      labels:
+        app: netbird-server
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      containers:
+        - name: server
+          image: netbirdio/netbird-server:0.81.2
+          args:
+            - "--config=/etc/netbird/config.yaml"
+          env:
+            - name: NB_SETUP_PAT_ENABLED
+              value: "true"
+          ports:
+            - name: http
+              containerPort: 80
+            - name: health
+              containerPort: 9000
+          readinessProbe:
+            tcpSocket:
+              port: http
+          volumeMounts:
+            - mountPath: /etc/netbird
+              name: config
+              readOnly: true
+            - mountPath: /var/lib/netbird
+              name: data
+      volumes:
+        - name: config
+          secret:
+            secretName: netbird-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: netbird-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbird-service
+  namespace: netbird
+spec:
+  selector:
+    app: netbird-server
+  ports:
+    - name: http
+      port: 80
+    - name: grpc
+      port: 81
+      targetPort: 80
+      appProtocol: kubernetes.io/h2c

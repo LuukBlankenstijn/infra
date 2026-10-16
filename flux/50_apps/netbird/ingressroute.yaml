@@ -1,0 +1,26 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: netbird
+  namespace: netbird
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`netbird.luukblankenstijn.nl`) && (PathPrefix(`/relay`) || PathPrefix(`/ws-proxy`) || PathPrefix(`/oauth2`) || PathPrefix(`/api`))
+      kind: Rule
+      services:
+        - name: netbird-service
+          port: 80
+    - match: Host(`netbird.luukblankenstijn.nl`) && (PathPrefix(`/signalexchange.SignalExchange`) || PathPrefix(`/management.ManagementService`) || PathPrefix(`/management.ProxyService`))
+      kind: Rule
+      services:
+        - name: netbird-service
+          port: 81
+          scheme: h2c
+    - match: Host(`netbird.luukblankenstijn.nl`)
+      kind: Rule
+      services:
+        - name: dashboard
+          port: 80
+  tls: {}

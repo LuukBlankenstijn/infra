@@ -15,18 +15,28 @@ spec:
         name: authentik
   values:
     authentik:
-      enabled: true
-      web:
-        path: /
-      postgresql:
-        host: authentik-authentik-postgresql.authentik.svc.cluster.local
-        user: file:///postgres-creds/username
-        password: file:///postgres-creds/password
+      log_level: info
+      disable_update_check: true
+      disable_startup_analytics: true
+      error_reporting:
+        enabled: false
       email:
         from: auth@luukblankenstijn.nl
         host: smtp.protonmail.ch
+        port: 587
         use_tls: true
         username: auth@luukblankenstijn.nl
+    global:
+      env:
+        - name: AUTHENTIK_POSTGRESQL__SSLMODE
+          value: verify-full
+        - name: AUTHENTIK_POSTGRESQL__SSLROOTCERT
+          value: system
+      envFrom:
+        - secretRef:
+            name: authentik-db
+        - secretRef:
+            name: authentik-auth
     server:
       ingress:
         enabled: true
@@ -36,38 +46,8 @@ spec:
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
           - auth.luukblankenstijn.nl
-      env:
-        - name: AUTHENTIK_EMAIL__PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: authentik-email-creds
-              key: SMTP_PASSWORD
-      volumes:
-        - name: postgres-creds
-          secret:
-            secretName: authentik-postgres-credentials
-      volumeMounts:
-        - name: postgres-creds
-          mountPath: /postgres-creds
-          readOnly: true
-    worker:
-      env:
-        - name: AUTHENTIK_EMAIL__PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: authentik-email-creds
-              key: SMTP_PASSWORD
-      volumes:
-        - name: postgres-creds
-          secret:
-            secretName: authentik-postgres-credentials
-      volumeMounts:
-        - name: postgres-creds
-          mountPath: /postgres-creds
-          readOnly: true
     postgresql:
-      enabled: true
-      auth:
-        username: authentik
-        database: authentik
-        existingSecret: authentik-postgres-credentials
+      enabled: false
+  upgrade:
+    remediation:
+      retries: 3

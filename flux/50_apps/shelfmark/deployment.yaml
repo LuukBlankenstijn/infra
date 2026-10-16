@@ -64,10 +64,10 @@ spec:
       volumes:
         - name: books
           persistentVolumeClaim:
-            claimName: shelfmark-books
+            claimName: books
         - name: config
           persistentVolumeClaim:
-            claimName: shelfmark-config
+            claimName: config
         - name: downloads
           persistentVolumeClaim:
-            claimName: shelfmark-downloads
+            claimName: downloads
