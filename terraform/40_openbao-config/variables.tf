@@ -35,7 +35,7 @@ variable "frp_token" {
 }
 
 variable "netbird_secrets" {
-  description = "Decrypted secrets/netbird.yaml: the owner PAT minted by /api/setup. Exported from sops by .envrc; never set it by hand."
+  description = "Decrypted secrets/netbird.yaml: the owner PAT minted by /api/setup and the reverse-proxy token minted by `netbird-server admin token create`. Exported from sops by .envrc; never set it by hand."
   type        = string
   sensitive   = true
 }

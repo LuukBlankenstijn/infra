@@ -11,6 +11,9 @@ locals {
     "netbird/operator" = {
       api_key = local.netbird_secrets.api_token
     }
+    "netbird/reverse-proxy" = {
+      token = local.netbird_secrets.proxy_token
+    }
     "frpc/frpc" = {
       token = var.frp_token
     }

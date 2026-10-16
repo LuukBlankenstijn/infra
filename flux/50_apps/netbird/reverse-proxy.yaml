@@ -1,0 +1,113 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: netbird-reverse-proxy
+  namespace: netbird
+spec:
+  secretName: netbird-reverse-proxy-tls
+  issuerRef:
+    name: letsencrypt-dns
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.luukblankenstijn.nl"
+    - luukblankenstijn.nl
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: netbird-reverse-proxy-token
+  namespace: netbird
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: secret
+    kind: SecretStore
+  target:
+    name: netbird-reverse-proxy-token
+  data:
+    - secretKey: NB_PROXY_TOKEN
+      remoteRef:
+        key: netbird/reverse-proxy
+        property: token
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reverse-proxy
+  namespace: netbird
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netbird-reverse-proxy
+  template:
+    metadata:
+      labels:
+        app: netbird-reverse-proxy
+    spec:
+      containers:
+        - name: proxy
+          image: netbirdio/reverse-proxy:0.81.2
+          env:
+            - name: NB_PROXY_DOMAIN
+              value: proxy.luukblankenstijn.nl
+            - name: NB_PROXY_MANAGEMENT_ADDRESS
+              value: http://netbird-service:81
+            - name: NB_PROXY_ALLOW_INSECURE
+              value: "true"
+            - name: NB_PROXY_PRIVATE
+              value: "true"
+            - name: NB_PROXY_ADDRESS
+              value: ":8443"
+            - name: NB_PROXY_ACME_CERTIFICATES
+              value: "false"
+            - name: NB_PROXY_CERTIFICATE_DIRECTORY
+              value: /certs
+            - name: NB_PROXY_PROXY_PROTOCOL
+              value: "true"
+            - name: NB_PROXY_TRUSTED_PROXIES
+              value: 10.42.0.0/16
+            - name: NB_PROXY_HEALTH_ADDRESS
+              value: ":8080"
+          envFrom:
+            - secretRef:
+                name: netbird-reverse-proxy-token
+          ports:
+            - name: proxy-tls
+              containerPort: 8443
+            - name: health
+              containerPort: 8080
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+          startupProbe:
+            httpGet:
+              path: /healthz/startup
+              port: health
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /healthz/ready
+              port: health
+          livenessProbe:
+            httpGet:
+              path: /healthz/live
+              port: health
+      volumes:
+        - name: certs
+          secret:
+            secretName: netbird-reverse-proxy-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbird-reverse-proxy
+  namespace: netbird
+spec:
+  selector:
+    app: netbird-reverse-proxy
+  ports:
+    - name: proxy-tls
+      port: 8443
