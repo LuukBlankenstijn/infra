@@ -33,3 +33,9 @@ variable "frp_token" {
   type        = string
   sensitive   = true
 }
+
+variable "netbird_secrets" {
+  description = "Decrypted secrets/netbird.yaml: the owner PAT minted by /api/setup. Exported from sops by .envrc; never set it by hand."
+  type        = string
+  sensitive   = true
+}

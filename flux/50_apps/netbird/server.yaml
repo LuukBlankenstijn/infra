@@ -22,9 +22,6 @@ spec:
           image: netbirdio/netbird-server:0.81.2
           args:
             - "--config=/etc/netbird/config.yaml"
-          env:
-            - name: NB_SETUP_PAT_ENABLED
-              value: "true"
           ports:
             - name: http
               containerPort: 80

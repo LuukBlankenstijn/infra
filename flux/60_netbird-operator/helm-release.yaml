@@ -21,3 +21,5 @@ spec:
     managementURL: https://netbird.luukblankenstijn.nl
     cluster:
       name: home
+    webhook:
+      failurePolicy: Ignore

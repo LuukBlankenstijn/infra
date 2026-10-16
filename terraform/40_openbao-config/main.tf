@@ -1,11 +1,15 @@
 locals {
-  app_secrets = yamldecode(var.app_secrets)
+  app_secrets     = yamldecode(var.app_secrets)
+  netbird_secrets = yamldecode(var.netbird_secrets)
 
   secrets = {
     "netbird/server" = {
       store_encryption_key = random_bytes.netbird_store_encryption_key.base64
       session_cookie_key   = random_bytes.netbird_session_cookie_key.base64
       auth_secret          = random_password.netbird_auth_secret.result
+    }
+    "netbird/operator" = {
+      api_key = local.netbird_secrets.api_token
     }
     "frpc/frpc" = {
       token = var.frp_token
