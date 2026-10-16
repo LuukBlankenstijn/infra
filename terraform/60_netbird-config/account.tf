@@ -1,8 +1,7 @@
 resource "netbird_account_settings" "this" {
   network_range              = "10.16.0.0/16"
   dns_domain                 = "peers.luuk.internal"
-  jwt_groups_enabled         = true
-  jwt_groups_claim_name      = "groups"
+  jwt_groups_enabled         = false
   groups_propagation_enabled = true
   user_approval_required     = false
 }

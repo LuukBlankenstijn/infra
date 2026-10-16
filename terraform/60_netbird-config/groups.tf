@@ -1,4 +1,4 @@
-data "netbird_group" "admins" {
+resource "netbird_group" "admins" {
   name = "admins"
 }
 

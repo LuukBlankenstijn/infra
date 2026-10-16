@@ -19,7 +19,7 @@ resource "netbird_policy" "admins_to" {
     action        = "accept"
     bidirectional = false
     protocol      = "all"
-    sources       = [data.netbird_group.admins.id]
+    sources       = [netbird_group.admins.id]
     destinations  = [each.value]
   }
 }
@@ -35,7 +35,7 @@ resource "netbird_policy" "admins_to_admins" {
     action        = "accept"
     bidirectional = true
     protocol      = "all"
-    sources       = [data.netbird_group.admins.id]
-    destinations  = [data.netbird_group.admins.id]
+    sources       = [netbird_group.admins.id]
+    destinations  = [netbird_group.admins.id]
   }
 }

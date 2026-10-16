@@ -3,5 +3,5 @@ resource "netbird_dns_zone" "internal" {
   domain               = "luuk.internal"
   enabled              = true
   enable_search_domain = true
-  distribution_groups  = [data.netbird_group.admins.id]
+  distribution_groups  = [netbird_group.admins.id]
 }

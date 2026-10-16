@@ -58,14 +58,6 @@ resource "authentik_application" "netbird" {
   meta_launch_url   = "https://${local.netbird_host}"
 }
 
-data "authentik_user" "luuk" {
-  username = "luukblankenstijn"
-}
-
-resource "authentik_group" "admins" {
-  name  = "admins"
-  users = [data.authentik_user.luuk.id]
-}
 
 resource "vault_mount" "authentik" {
   path        = "authentik"
