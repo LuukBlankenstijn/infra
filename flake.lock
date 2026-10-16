@@ -19,8 +19,7 @@
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
-        "sops-nix": "sops-nix",
-        "ssh-keys": "ssh-keys"
+        "sops-nix": "sops-nix"
       }
     },
     "sops-nix": {
@@ -41,18 +40,6 @@
         "owner": "Mic92",
         "repo": "sops-nix",
         "type": "github"
-      }
-    },
-    "ssh-keys": {
-      "flake": false,
-      "locked": {
-        "narHash": "sha256-qff6xerJBFiPXtkb+6z25hPcx0DD1XimNHfywvJbAos=",
-        "type": "file",
-        "url": "https://github.com/LuukBlankenstijn.keys"
-      },
-      "original": {
-        "type": "file",
-        "url": "https://github.com/LuukBlankenstijn.keys"
       }
     }
   },

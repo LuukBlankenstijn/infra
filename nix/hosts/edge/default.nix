@@ -1,4 +1,4 @@
-{ inputs, pkgs, ... }:
+{ pkgs, ... }:
 {
   imports = [
     ./hardware-configuration.nix
@@ -25,7 +25,7 @@
   users.users.luuk = {
     isNormalUser = true;
     extraGroups = [ "wheel" ];
-    openssh.authorizedKeys.keyFiles = [ inputs.ssh-keys.outPath ];
+    openssh.authorizedKeys.keyFiles = [ ./authorized_keys ];
   };
   security.sudo.wheelNeedsPassword = false;
 
