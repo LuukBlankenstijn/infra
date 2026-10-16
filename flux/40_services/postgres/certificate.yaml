@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: postgres-tls
+  namespace: postgres
+spec:
+  secretName: postgres-tls
+  secretTemplate:
+    labels:
+      cnpg.io/reload: ""
+  issuerRef:
+    name: letsencrypt-dns
+    kind: ClusterIssuer
+  dnsNames:
+    - postgres.luukblankenstijn.nl

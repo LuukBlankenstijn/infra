@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: s3
+  namespace: mariadb
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: s3
+  namespace: mariadb
+spec:
+  provider:
+    vault:
+      server: http://openbao-active.openbao.svc:8200
+      path: s3
+      version: v2
+      auth:
+        kubernetes:
+          mountPath: kubernetes
+          role: s3-mariadb
+          serviceAccountRef:
+            name: s3
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: mariadb-s3
+  namespace: mariadb
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: s3
+    kind: SecretStore
+  data:
+    - secretKey: ACCESS_KEY_ID
+      remoteRef:
+        key: mariadb/mariadb
+        property: access_key_id
+    - secretKey: SECRET_ACCESS_KEY
+      remoteRef:
+        key: mariadb/mariadb
+        property: secret_access_key
+---
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: PhysicalBackup
+metadata:
+  name: mariadb-daily
+  namespace: mariadb
+spec:
+  mariaDbRef:
+    name: mariadb
+  schedule:
+    cron: "0 3 * * *"
+    immediate: true
+  compression: gzip
+  maxRetention: 720h
+  storage:
+    s3:
+      bucket: luuk-mariadb
+      prefix: base
+      endpoint: fsn1.your-objectstorage.com
+      region: fsn1
+      accessKeyIdSecretKeyRef:
+        name: mariadb-s3
+        key: ACCESS_KEY_ID
+      secretAccessKeySecretKeyRef:
+        name: mariadb-s3
+        key: SECRET_ACCESS_KEY
+      tls:
+        enabled: true
+---
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: PointInTimeRecovery
+metadata:
+  name: mariadb
+  namespace: mariadb
+spec:
+  physicalBackupRef:
+    name: mariadb-daily
+  compression: gzip
+  storage:
+    s3:
+      bucket: luuk-mariadb
+      prefix: binlog
+      endpoint: fsn1.your-objectstorage.com
+      region: fsn1
+      accessKeyIdSecretKeyRef:
+        name: mariadb-s3
+        key: ACCESS_KEY_ID
+      secretAccessKeySecretKeyRef:
+        name: mariadb-s3
+        key: SECRET_ACCESS_KEY
+      tls:
+        enabled: true

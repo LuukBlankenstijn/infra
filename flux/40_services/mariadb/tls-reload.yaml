@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tls-reload
+  namespace: mariadb
+spec:
+  schedule: "30 4 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: flush-ssl
+              image: docker.io/library/mariadb:12.3.3
+              env:
+                - name: MYSQL_PWD
+                  valueFrom:
+                    secretKeyRef:
+                      name: mariadb-root
+                      key: password
+              command:
+                - bash
+                - -euo
+                - pipefail
+                - -c
+                - |
+                  for address in $(getent ahostsv4 mariadb.mariadb.svc.cluster.local | awk '{print $1}' | sort -u); do
+                    mariadb --host="$address" --user=root --disable-ssl-verify-server-cert --execute='FLUSH SSL'
+                    echo "reloaded TLS on $address"
+                  done
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL

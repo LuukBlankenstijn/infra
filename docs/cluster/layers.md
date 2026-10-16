@@ -9,7 +9,8 @@ with `prune: true`, `wait: true` and ordering only through `dependsOn`:
 | `sealed-secrets` | `flux/10_sealed-secrets` | - |
 | `controllers` | `flux/20_controllers` | `sealed-secrets` |
 | `config` | `flux/30_config` | `controllers` |
-| `services` | `flux/40_services` | `config` |
+| `openbao` | `flux/30_openbao` | `controllers` |
+| `services` | `flux/40_services` | `config`, `openbao` |
 | `apps` | `flux/50_apps` | `services` |
 | `netbird-operator` | `flux/60_netbird-operator` | `apps` |
 | `access` | `flux/70_access` | `netbird-operator` |
@@ -23,6 +24,9 @@ with `prune: true`, `wait: true` and ordering only through `dependsOn`:
 - `netbird-operator` comes after `apps` because its API key is only available
   once NetBird runs. Everything that needs the operator's CRDs (ClusterProxy,
   SetupKey, SidecarProfile) lives in `access`.
+- `access` reads `SetupKey` health from its `Ready` condition only: netbird-operator
+  0.8.0 never advances `status.observedGeneration` after the first reconcile, so the
+  default health check would wait forever.
 - Layer directories have no `kustomization.yaml`; Flux generates one from every
   manifest below the path. A subdirectory that needs a generator
   (`20_controllers/snapshot-controller`) carries its own.

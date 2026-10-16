@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  databases.override: |
+    rewrite stop {
+      name exact postgres.luukblankenstijn.nl postgres-rw.postgres.svc.cluster.local
+      answer auto
+    }
+    rewrite stop {
+      name exact mariadb.luukblankenstijn.nl mariadb.mariadb.svc.cluster.local
+      answer auto
+    }

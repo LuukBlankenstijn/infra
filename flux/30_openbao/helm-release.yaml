@@ -1,0 +1,117 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: openbao
+  namespace: openbao
+spec:
+  releaseName: openbao
+  interval: 1h
+  chart:
+    spec:
+      chart: openbao
+      version: 0.30.4
+      sourceRef:
+        kind: HelmRepository
+        name: openbao-charts
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    injector:
+      enabled: false
+    server:
+      statefulSet:
+        securityContext:
+          container:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      extraSecretEnvironmentVars:
+        - envName: BAO_SEAL_KEY
+          secretName: openbao-seal
+          secretKey: key
+      dataStorage:
+        enabled: true
+        size: 1Gi
+        storageClass: longhorn
+      ha:
+        enabled: true
+        replicas: 1
+        disruptionBudget:
+          enabled: false
+        raft:
+          enabled: true
+          setNodeId: true
+          config: |
+            ui = true
+
+            listener "tcp" {
+              tls_disable = 1
+              address = "[::]:8200"
+              cluster_address = "[::]:8201"
+
+              telemetry {
+                unauthenticated_metrics_access = true
+              }
+            }
+
+            telemetry {
+              prometheus_retention_time = "24h"
+              disable_hostname          = true
+            }
+
+            storage "raft" {
+              path = "/openbao/data"
+            }
+
+            service_registration "kubernetes" {}
+
+            seal "static" {
+              current_key_id = "openbao-seal-2026-10-16"
+              current_key    = "env://BAO_SEAL_KEY"
+            }
+
+            initialize "auth" {
+              request "enable-kubernetes" {
+                operation = "update"
+                path      = "sys/auth/kubernetes"
+                data = {
+                  type = "kubernetes"
+                }
+              }
+
+              request "config-kubernetes" {
+                operation = "update"
+                path      = "auth/kubernetes/config"
+                data = {
+                  kubernetes_host = "https://kubernetes.default.svc"
+                }
+              }
+
+              request "admin-policy" {
+                operation = "update"
+                path      = "sys/policies/acl/admin"
+                data = {
+                  policy = <<-EOF
+                    path "*" {
+                      capabilities = ["create", "update", "read", "delete", "list", "scan", "sudo"]
+                    }
+                  EOF
+                }
+              }
+
+              request "admin-role" {
+                operation = "update"
+                path      = "auth/kubernetes/role/admin"
+                data = {
+                  bound_service_account_names      = ["openbao-admin"]
+                  bound_service_account_namespaces = ["openbao"]
+                  token_policies                   = ["admin"]
+                  token_ttl                        = "1h"
+                }
+              }
+            }

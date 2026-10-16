@@ -1,0 +1,74 @@
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: MariaDB
+metadata:
+  name: mariadb
+  namespace: mariadb
+spec:
+  image: docker.io/library/mariadb:12.3.3
+  replicas: 1
+  storage:
+    storageClassName: longhorn-single
+    size: 5Gi
+  tls:
+    enabled: false
+  volumes:
+    - name: tls
+      secret:
+        secretName: mariadb-tls
+  volumeMounts:
+    - name: tls
+      mountPath: /etc/mariadb-tls
+      readOnly: true
+  myCnf: |
+    [mariadb]
+    ssl_cert = /etc/mariadb-tls/tls.crt
+    ssl_key = /etc/mariadb-tls/tls.key
+    master_ssl_verify_server_cert = 0
+    max_binlog_size = 128M
+  database: provisioner
+  username: provisioner
+  passwordSecretKeyRef:
+    name: mariadb-provisioner
+    key: password
+    generate: true
+  pointInTimeRecoveryRef:
+    name: mariadb
+  metrics:
+    enabled: false
+  service:
+    type: LoadBalancer
+---
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: Grant
+metadata:
+  name: provisioner
+  namespace: mariadb
+spec:
+  mariaDbRef:
+    name: mariadb
+  username: provisioner
+  database: "*"
+  table: "*"
+  grantOption: true
+  privileges:
+    - SELECT
+    - INSERT
+    - UPDATE
+    - DELETE
+    - CREATE
+    - DROP
+    - REFERENCES
+    - INDEX
+    - ALTER
+    - CREATE TEMPORARY TABLES
+    - LOCK TABLES
+    - EXECUTE
+    - CREATE VIEW
+    - SHOW VIEW
+    - CREATE ROUTINE
+    - ALTER ROUTINE
+    - EVENT
+    - TRIGGER
+    - DELETE HISTORY
+    - SHOW CREATE ROUTINE
+    - CREATE USER

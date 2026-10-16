@@ -1,0 +1,45 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres
+  namespace: postgres
+spec:
+  instances: 1
+  enableSuperuserAccess: false
+  storage:
+    storageClass: longhorn-single
+    size: 20Gi
+  certificates:
+    serverTLSSecret: postgres-tls
+    serverCASecret: postgres-server-ca
+  postgresql:
+    parameters:
+      tcp_keepalives_idle: "60"
+      tcp_keepalives_interval: "10"
+      tcp_keepalives_count: "3"
+      idle_in_transaction_session_timeout: "60000"
+    pg_hba:
+      - hostnossl all all all reject
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: postgres
+  bootstrap:
+    initdb:
+      database: provisioner
+      owner: provisioner
+  managed:
+    roles:
+      - name: provisioner
+        login: true
+        createdb: true
+        createrole: true
+    services:
+      additional:
+        - selectorType: rw
+          serviceTemplate:
+            metadata:
+              name: postgres-lan
+            spec:
+              type: LoadBalancer
