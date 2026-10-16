@@ -71,9 +71,17 @@ netbird-operator API key.
 
 SSO users join the account whose `domain` is the single-account domain
 `netbird.selfhosted` and that is marked `is_domain_primary_account`. The account
-`/api/setup` creates has neither, so on a fresh store both are set once in the
-`netbird` database (`accounts` table) before the first Authentik login;
-otherwise that login creates a second, empty account.
+`/api/setup` creates has neither, so on a fresh store, right after `/api/setup`
+and before the first Authentik login, mark it:
+
+```sh
+kubectl -n netbird scale deploy server --replicas=0
+kubectl -n postgres exec postgres-1 -c postgres -- psql -U postgres -d netbird -c \
+  "update accounts set domain = 'netbird.selfhosted', domain_category = 'private', is_domain_primary_account = true"
+kubectl -n netbird scale deploy server --replicas=1
+```
+
+Without it, the first Authentik login creates a second, empty account.
 
 ## Account configuration
 
