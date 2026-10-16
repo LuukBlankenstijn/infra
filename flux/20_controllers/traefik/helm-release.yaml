@@ -1,0 +1,72 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: traefik
+  namespace: traefik
+spec:
+  releaseName: traefik-traefik
+  interval: 1h
+  chart:
+    spec:
+      chart: traefik
+      version: "41.7.1"
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: traefik
+  install:
+    crds: CreateReplace
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  values:
+    deployment:
+      kind: DaemonSet
+    service:
+      spec:
+        externalTrafficPolicy: Local
+    ingressClass:
+      enabled: true
+      isDefaultClass: true
+      name: traefik
+    ports:
+      web:
+        http:
+          redirections:
+            entryPoint:
+              to: websecure
+              scheme: https
+              permanent: true
+      websecure:
+        asDefault: true
+      hytale-udp:
+        port: 5520
+        exposedPort: 5520
+        protocol: UDP
+        expose:
+          default: true
+      minecraft:
+        port: 25565
+        exposedPort: 25565
+        protocol: TCP
+        expose:
+          default: true
+      voicechat-udp:
+        port: 24454
+        exposedPort: 24454
+        protocol: UDP
+        expose:
+          default: true
+    accessLog:
+      enabled: true
+      format: "json"
+    providers:
+      kubernetesGateway:
+        enabled: true
+      kubernetesCRD:
+        allowCrossNamespace: true
+    tlsStore:
+      default:
+        defaultCertificate:
+          secretName: wildcard-luukblankenstijn-nl-tls

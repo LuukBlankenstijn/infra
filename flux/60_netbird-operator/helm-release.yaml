@@ -1,0 +1,23 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: netbird-operator
+  namespace: netbird
+spec:
+  releaseName: netbird-operator
+  storageNamespace: flux-system
+  interval: 1h
+  chart:
+    spec:
+      chart: netbird-operator
+      version: "0.8.0"
+      sourceRef:
+        kind: HelmRepository
+        name: netbirdio-charts
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    managementURL: https://netbird.luukblankenstijn.nl
+    cluster:
+      name: home

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vaultwarden
+  namespace: vaultwarden
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: vaultwarden }
+  template:
+    metadata:
+      labels: { app: vaultwarden }
+    spec:
+      containers:
+        - name: vaultwarden
+          image: vaultwarden/server:1.37.4
+          ports:
+            - containerPort: 80
+          envFrom:
+            - secretRef:
+                name: config
+          env:
+            - name: PG_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-pg-creds
+                  key: username
+            - name: PG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-pg-creds
+                  key: password
+            - name: DATABASE_URL
+              value: "postgresql://$(PG_USERNAME):$(PG_PASSWORD)@postgres-rw.cnpg.svc.cluster.local:5432/vaultwarden"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data

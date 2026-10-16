@@ -1,9 +1,7 @@
 {
-  description = "Standalone IdP (Zitadel) + NetBird host on Hetzner Cloud";
+  description = "Home infrastructure: k3s cluster, edge VPS, OpenTofu roots";
 
   inputs = {
-    # Unstable channel for newer netbird / zitadel. flake.lock pins the exact
-    # commit, so updates are deliberate (nix flake update) — no auto-drift.
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     sops-nix = {
@@ -11,88 +9,44 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Declarative disk partitioning consumed by nixos-anywhere.
-    disko = {
-      url = "github:nix-community/disko";
-      inputs.nixpkgs.follows = "nixpkgs";
+    ssh-keys = {
+      url = "https://github.com/LuukBlankenstijn.keys";
+      flake = false;
     };
-
-    # tmpfs root + opt-in persisted paths.
-    impermanence.url = "github:nix-community/impermanence";
   };
 
   outputs =
-    inputs@{
-      self,
-      nixpkgs,
-      sops-nix,
-      disko,
-      impermanence,
-      ...
-    }:
+    inputs@{ nixpkgs, sops-nix, ... }:
     let
       systems = [
         "x86_64-linux"
         "aarch64-linux"
       ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
-      pkgsFor = system: import nixpkgs { inherit system; };
-
-      cfg = import ./nix/_config.nix;
+      pkgsFor = system: nixpkgs.legacyPackages.${system};
     in
     {
-      nixosConfigurations.netbird-host = nixpkgs.lib.nixosSystem {
+      nixosConfigurations.edge = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = { inherit inputs cfg; };
+        specialArgs = { inherit inputs; };
         modules = [
           sops-nix.nixosModules.sops
-          disko.nixosModules.disko
-          ./nix/host.nix
-          ./nix/hetzner.nix
-          ./nix/disko.nix
-          ./nix/traefik.nix
-          ./nix/zitadel
-          ./nix/netbird
+          ./nix/hosts/edge
         ];
       };
 
-      devShells = forAllSystems (
-        system:
-        let
-          pkgs = pkgsFor system;
-        in
-        {
-          default = pkgs.mkShellNoCC {
-            name = "infra-base";
+      packages = forAllSystems (system: {
+        docs = import ./nix/packages/docs.nix { pkgs = pkgsFor system; };
+      });
 
-            packages = with pkgs; [
-              opentofu
-              nixos-anywhere
-              sops
-              age
-              ssh-to-age
-              hcloud
-              awscli2
-              zitadel
-              postgresql
-              mkpasswd
-              nixpkgs-fmt
-              nix-output-monitor
-              git
-              jq
-              yq-go
-              curl
-              openssl
-            ];
+      checks = forAllSystems (system: {
+        docs = import ./nix/packages/docs.nix { pkgs = pkgsFor system; };
+      });
 
-            shellHook = ''
-              echo "infra-base devshell — $(tofu version | head -n1)"
-              echo "nixpkgs:    ${nixpkgs.rev or "dirty"} (nixos-unstable)"
-            '';
-          };
-        }
-      );
+      devShells = forAllSystems (system: {
+        default = import ./nix/devshell.nix { pkgs = pkgsFor system; };
+      });
 
-      formatter = forAllSystems (system: (pkgsFor system).nixpkgs-fmt);
+      formatter = forAllSystems (system: (pkgsFor system).nixfmt);
     };
 }

@@ -1,0 +1,56 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: minecraft
+  namespace: minecraft
+spec:
+  releaseName: minecraft-minecraft
+  interval: 30m
+  chart:
+    spec:
+      chart: minecraft
+      version: "5.1.3"
+      sourceRef:
+        kind: HelmRepository
+        name: itzg-minecraft-server-charts
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    fullnameOverride: minecraft
+    image:
+      pullPolicy: IfNotPresent
+    workloadAsStatefulSet: true
+    strategyType: RollingUpdate
+    minecraftServer:
+      motd: "minecraft server"
+      eula: "TRUE"
+      type: "FABRIC"
+      version: "26.2"
+      difficulty: normal
+      serviceType: ClusterIP
+      servicePort: 25565
+      memory: "6144M"
+      rcon:
+        enabled: true
+        withGeneratedPassword: true
+      extraPorts:
+        - name: voicechat
+          containerPort: 24454
+          protocol: UDP
+          service:
+            enabled: true
+            embedded: true
+            port: 24454
+    extraEnv:
+      MODRINTH_PROJECTS: "fabric-api,lithium,ferrite-core,krypton,c2me-fabric,spark,carpet,carpet-extra,simple-voice-chat"
+      MODRINTH_ALLOWED_VERSION_TYPE: "alpha"
+    resources:
+      requests:
+        memory: 7168Mi
+        cpu: 1000m
+    persistence:
+      storageClass: longhorn
+      dataDir:
+        enabled: true
+        Size: 10Gi

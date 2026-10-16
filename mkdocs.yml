@@ -1,0 +1,9 @@
+site_name: Home infrastructure
+repo_url: https://github.com/LuukBlankenstijn/infra
+strict: true
+theme:
+  name: material
+nav:
+  - Home: index.md
+  - Cluster:
+      - Flux layers: cluster/layers.md

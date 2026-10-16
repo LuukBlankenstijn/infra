@@ -1,0 +1,17 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: access
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: netbird-operator
+  interval: 1h
+  retryInterval: 1m
+  timeout: 10m
+  path: ./flux/70_access
+  prune: true
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system

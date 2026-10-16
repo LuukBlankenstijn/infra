@@ -1,0 +1,73 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: authentik
+  namespace: authentik
+spec:
+  releaseName: authentik-authentik
+  interval: 30m
+  chart:
+    spec:
+      chart: authentik
+      version: "2026.8.4"
+      sourceRef:
+        kind: HelmRepository
+        name: authentik
+  values:
+    authentik:
+      enabled: true
+      web:
+        path: /
+      postgresql:
+        host: authentik-authentik-postgresql.authentik.svc.cluster.local
+        user: file:///postgres-creds/username
+        password: file:///postgres-creds/password
+      email:
+        from: auth@luukblankenstijn.nl
+        host: smtp.protonmail.ch
+        use_tls: true
+        username: auth@luukblankenstijn.nl
+    server:
+      ingress:
+        enabled: true
+        ingressClassName: traefik
+        annotations:
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+        hosts:
+          - auth.luukblankenstijn.nl
+      env:
+        - name: AUTHENTIK_EMAIL__PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: authentik-email-creds
+              key: SMTP_PASSWORD
+      volumes:
+        - name: postgres-creds
+          secret:
+            secretName: authentik-postgres-credentials
+      volumeMounts:
+        - name: postgres-creds
+          mountPath: /postgres-creds
+          readOnly: true
+    worker:
+      env:
+        - name: AUTHENTIK_EMAIL__PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: authentik-email-creds
+              key: SMTP_PASSWORD
+      volumes:
+        - name: postgres-creds
+          secret:
+            secretName: authentik-postgres-credentials
+      volumeMounts:
+        - name: postgres-creds
+          mountPath: /postgres-creds
+          readOnly: true
+    postgresql:
+      enabled: true
+      auth:
+        username: authentik
+        database: authentik
+        existingSecret: authentik-postgres-credentials

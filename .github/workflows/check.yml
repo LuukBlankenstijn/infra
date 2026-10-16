@@ -1,0 +1,28 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: flake evaluates, the edge host builds, docs build
+        run: nix flake check --print-build-logs
+
+      - name: edge host closure builds
+        run: nix build --no-link --print-build-logs .#nixosConfigurations.edge.config.system.build.toplevel

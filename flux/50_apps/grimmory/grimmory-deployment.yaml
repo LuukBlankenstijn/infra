@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grimmory
+  namespace: grimmory
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: grimmory }
+  template:
+    metadata:
+      labels: { app: grimmory }
+    spec:
+      initContainers:
+        - name: wait-for-mariadb
+          image: busybox:1.38
+          command: ["sh", "-c", "until nc -z mariadb 3306; do sleep 2; done"]
+      containers:
+        - name: grimmory
+          image: grimmory/grimmory:v3.5.0
+          ports:
+            - containerPort: 6060
+          envFrom:
+            - secretRef:
+                name: grimmory-env
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: books
+              mountPath: /books
+            - name: bookdrop
+              mountPath: /bookdrop
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: grimmory-data
+        - name: books
+          persistentVolumeClaim:
+            claimName: grimmory-books
+        - name: bookdrop
+          emptyDir: {}
