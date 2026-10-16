@@ -73,3 +73,5 @@ spec:
         - name: config
           configMap:
             name: frpc
+  strategy:
+    type: Recreate
