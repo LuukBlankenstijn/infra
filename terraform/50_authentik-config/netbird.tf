@@ -38,6 +38,7 @@ resource "authentik_provider_oauth2" "netbird" {
   property_mappings  = data.authentik_property_mapping_provider_scope.oidc.ids
 
   include_claims_in_id_token = true
+  grant_types                = ["authorization_code", "refresh_token"]
 
   allowed_redirect_uris = [
     {
