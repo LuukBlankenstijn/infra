@@ -1,8 +1,0 @@
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: hybrowse
-  namespace: hytale
-spec:
-  interval: 1h
-  url: https://hybrowse.github.io/hytale-server-docker

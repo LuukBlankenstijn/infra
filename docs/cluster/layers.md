@@ -24,5 +24,5 @@ with `prune: true`, `wait: true` and ordering only through `dependsOn`:
   once NetBird runs. Everything that needs the operator's CRDs (ClusterProxy,
   SetupKey, SidecarProfile) lives in `access`.
 - Layer directories have no `kustomization.yaml`; Flux generates one from every
-  manifest below the path. Subdirectories that need a generator
-  (`50_apps/hytale`, `20_controllers/snapshot-controller`) carry their own.
+  manifest below the path. A subdirectory that needs a generator
+  (`20_controllers/snapshot-controller`) carries its own.

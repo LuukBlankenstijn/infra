@@ -19,6 +19,7 @@ pkgs.mkShellNoCC {
     postgresql
     sops
     ssh-to-age
+    (import ./packages/mint-kubeconfig.nix { inherit pkgs; })
     yq-go
     (python3.withPackages (ps: [ ps.mkdocs-material ]))
   ];

@@ -40,12 +40,6 @@ spec:
               permanent: true
       websecure:
         asDefault: true
-      hytale-udp:
-        port: 5520
-        exposedPort: 5520
-        protocol: UDP
-        expose:
-          default: true
       minecraft:
         port: 25565
         exposedPort: 25565

@@ -1,13 +1,10 @@
 { config, ... }:
 let
   controlPort = 7000;
-  forwardedPorts = {
-    tcp = [
-      80
-      443
-    ];
-    udp = [ 5520 ];
-  };
+  forwardedTcpPorts = [
+    80
+    443
+  ];
 in
 {
   sops.secrets.frp-token = { };
@@ -29,12 +26,9 @@ in
         token = "{{ .Envs.FRP_TOKEN }}";
       };
       transport.tls.force = true;
-      allowPorts = map (port: { single = port; }) (forwardedPorts.tcp ++ forwardedPorts.udp);
+      allowPorts = map (port: { single = port; }) forwardedTcpPorts;
     };
   };
 
-  networking.firewall = {
-    allowedTCPPorts = [ controlPort ] ++ forwardedPorts.tcp;
-    allowedUDPPorts = forwardedPorts.udp;
-  };
+  networking.firewall.allowedTCPPorts = [ controlPort ] ++ forwardedTcpPorts;
 }
