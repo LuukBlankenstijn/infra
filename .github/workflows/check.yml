@@ -73,7 +73,7 @@ jobs:
         run: nix build --no-link --print-build-logs .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel
 
   flake:
-    needs: [eval, host]
+    needs: [changes, eval, host]
     if: always()
     runs-on: ubuntu-latest
     steps:
