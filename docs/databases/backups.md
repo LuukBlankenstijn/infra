@@ -130,5 +130,6 @@ same values.
 - **The admin age key.** It is the only recipient of every `secrets/*.yaml`
   except `edge.yaml`. Without it the state passphrase, the sealing key and the
   external credentials are gone, and with the sealing key every SealedSecret.
-- **Verification.** Nothing in the repository restores a backup on a schedule or
-  alerts on a failed backup or a stalled archive.
+- **Restore tests.** Nothing restores a backup on a schedule. Failed, stale and
+  missing backups and a stalled WAL archive do alert (group `data`, see
+  [Alerting](../observability/alerting.md)).
