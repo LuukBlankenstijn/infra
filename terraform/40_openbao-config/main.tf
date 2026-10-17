@@ -94,3 +94,13 @@ resource "vault_kubernetes_auth_backend_role" "secret" {
   token_policies = each.value
   token_ttl      = 3600
 }
+
+resource "vault_auth_backend" "oidc" {
+  type        = "oidc"
+  path        = "oidc"
+  description = "Human login through Authentik, configured by 50_authentik-config."
+
+  tune {
+    listing_visibility = "unauth"
+  }
+}

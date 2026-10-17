@@ -183,11 +183,9 @@ creates:
 - AppRole `device-<host>` on auth mount `approle` with that policy (1-hour
   tokens) and one SecretID.
 
-```sh
-tofu -chdir=terraform/50_pki output -json host_approles
-```
-
-prints `role_id` and `secret_id` per host. What a host needs to renew:
+The same values are in OpenBao at `devices/hosts/<host>` (`role_id`,
+`secret_id`); see [Copying from the OpenBao UI](#copying-from-the-openbao-ui).
+What a host needs to renew:
 
 | Setting | Value |
 | --- | --- |
@@ -210,11 +208,11 @@ Each entry in `local.phones` (currently `phone`) gets its own intermediate on
 mount `pki-phone-<name>` and one client certificate for
 `<name>.devices.luukblankenstijn.nl`, valid 1 year and issued by OpenTofu.
 
+The certificate, key and chain are in OpenBao at `devices/phones/<name>`
+(`certificate`, `private_key`, `ca_chain`). Save them as `phone.crt`,
+`phone.key` and `phone-ca.crt`, then bundle them:
+
 ```sh
-tofu -chdir=terraform/50_pki output -json phone_certificates > phone.json
-jq -r '.phone.certificate' phone.json > phone.crt
-jq -r '.phone.private_key' phone.json > phone.key
-jq -r '.phone.ca_chain' phone.json > phone-ca.crt
 openssl pkcs12 -export -legacy -inkey phone.key -in phone.crt \
   -certfile phone-ca.crt -name phone -out phone.p12
 ```
@@ -224,12 +222,12 @@ default AES-256/PBKDF2, which many Android and iOS certificate installers
 reject as a wrong password. Without the legacy provider, use
 `-keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -macalg sha1` instead.
 
-Import `phone.p12` on the phone, then delete `phone.json`, `phone.key`,
-`phone.crt`, `phone-ca.crt` and `phone.p12`.
+Import `phone.p12` on the phone, then delete `phone.key`, `phone.crt`,
+`phone-ca.crt` and `phone.p12`.
 
 Renewal is yearly: the certificate resource has `auto_renew` with 30 days
-`min_seconds_remaining`, so an apply within the last 30 days issues a new one;
-export and import it again.
+`min_seconds_remaining`, so an apply within the last 30 days issues a new one
+and updates `devices/phones/<name>`; bundle and import it again.
 
 Revocation: remove the phone from `local.phones` and apply. Its mount and
 intermediate are deleted, `ca.crt` is rewritten without it, and Traefik rejects
@@ -239,6 +237,20 @@ minutes). To make it immediate, force the refresh right after the apply:
 ```sh
 kubectl -n traefik annotate externalsecret device-ca force-sync=$(date +%s) --overwrite
 ```
+
+### Copying from the OpenBao UI
+
+`https://openbao.luukblankenstijn.nl/ui` shows an OIDC login that goes through
+Authentik (application `openbao`, `terraform/50_authentik-config/openbao.tf`;
+auth mount `oidc` from `40_openbao-config`). Only members of the Authentik
+group `authentik Admins` can log in. Their token carries policy `operator`:
+
+- read and list on mount `devices` (kv-v2, owned by `50_pki`), which holds
+  `hosts/<host>` with the host's AppRole `role_id` and `secret_id`, and
+  `phones/<name>` with the phone's certificate, key and chain;
+- `update` on `pki-hosts/issue/*`, to issue a host certificate by hand.
+
+Tokens last one hour.
 
 ## Applying from scratch
 

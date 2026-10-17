@@ -75,8 +75,8 @@ resource "vault_pki_secret_backend_role" "host" {
   server_flag        = false
   no_store           = true
 
-  ttl     = "168h"
-  max_ttl = "168h"
+  ttl     = "604800"
+  max_ttl = "604800"
 
   key_type = "ec"
   key_bits = 256
@@ -168,8 +168,8 @@ resource "vault_pki_secret_backend_role" "phone" {
   client_flag        = true
   server_flag        = false
 
-  ttl     = "8760h"
-  max_ttl = "8760h"
+  ttl     = "31536000"
+  max_ttl = "31536000"
 
   key_type = "ec"
   key_bits = 256
@@ -222,4 +222,35 @@ resource "vault_kubernetes_auth_backend_role" "traefik" {
 
   token_policies = [vault_policy.device_ca_read.name]
   token_ttl      = 3600
+}
+
+resource "vault_mount" "devices" {
+  path        = "devices"
+  type        = "kv-v2"
+  description = "Per-device credentials to copy from the UI: host AppRole logins and phone certificates."
+}
+
+resource "vault_kv_secret_v2" "host" {
+  for_each = local.hosts
+
+  mount = vault_mount.devices.path
+  name  = "hosts/${each.key}"
+
+  data_json = jsonencode({
+    role_id   = vault_approle_auth_backend_role.host[each.key].role_id
+    secret_id = vault_approle_auth_backend_role_secret_id.host[each.key].secret_id
+  })
+}
+
+resource "vault_kv_secret_v2" "phone" {
+  for_each = local.phones
+
+  mount = vault_mount.devices.path
+  name  = "phones/${each.key}"
+
+  data_json = jsonencode({
+    certificate = vault_pki_secret_backend_cert.phone[each.key].certificate
+    private_key = vault_pki_secret_backend_cert.phone[each.key].private_key
+    ca_chain    = vault_pki_secret_backend_cert.phone[each.key].ca_chain
+  })
 }
