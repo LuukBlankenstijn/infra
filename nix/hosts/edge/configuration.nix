@@ -4,6 +4,7 @@
     ./hardware-configuration.nix
     ./frp.nix
     ./stun.nix
+    ./heartbeat.nix
   ];
 
   cfg = {

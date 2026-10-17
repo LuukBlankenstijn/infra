@@ -32,6 +32,8 @@ locals {
       luuk_password_hash         = random_password.ntfy_luuk.bcrypt_hash
       alertmanager_password_hash = random_password.ntfy_alertmanager.bcrypt_hash
       alertmanager_token         = local.ntfy_alertmanager_token
+      edge_password_hash         = random_password.ntfy_edge.bcrypt_hash
+      edge_token                 = var.ntfy_heartbeat_token
     }
     "observability/alertmanager" = {
       ntfy_token = local.ntfy_alertmanager_token
@@ -70,6 +72,11 @@ resource "random_password" "ntfy_luuk" {
 }
 
 resource "random_password" "ntfy_alertmanager" {
+  length  = 32
+  special = false
+}
+
+resource "random_password" "ntfy_edge" {
   length  = 32
   special = false
 }

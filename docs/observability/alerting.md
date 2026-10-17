@@ -87,8 +87,8 @@ Resolved notifications are sent at priority 2. Alerts are grouped by
 Inhibitions: a `critical` alert silences `warning` and `info` alerts with the same
 `alertname`, `namespace` and `instance`; a `warning` silences `info` the same way;
 kube-prometheus-stack's `InfoInhibitor` silences `info` alerts in its namespace.
-`Watchdog`, `InfoInhibitor` and Flux `info` events go to a receiver without
-integrations.
+`InfoInhibitor` and Flux `info` events go to a receiver without integrations.
+`Watchdog` goes to the heartbeat (below).
 
 Grafana has the Alertmanager as data source `Alertmanager` (implementation
 `mimir`): Alerting → Alert groups and Silences show and change it. Mimir's rules
@@ -102,6 +102,29 @@ curl -XPOST -H 'Content-Type: application/json' \
   http://localhost:18080/alertmanager/api/v2/alerts \
   -d '[{"labels":{"alertname":"Test","group":"meta","severity":"info"},"annotations":{"summary":"test"}}]'
 ```
+
+## Heartbeat from outside
+
+Everything above runs at home, so a dead home-server or home internet would be
+silent. kube-prometheus-stack's always-firing `Watchdog` covers that:
+
+1. The Alertmanager posts it every 5 minutes to ntfy topic `heartbeat`
+   (receiver `heartbeat`, priority 1; nobody subscribes to it).
+2. On the edge VPS, timer `home-heartbeat-check` (`nix/hosts/edge/heartbeat.nix`)
+   polls `https://ntfy.luukblankenstijn.nl/heartbeat/json?poll=1&since=10m`
+   every 5 minutes, with the edge's own client certificate and ntfy user
+   `edge` (read-only on `heartbeat`).
+3. If that returns nothing or fails, it posts once, at priority 5, to a topic on
+   the public `https://ntfy.sh`, and posts again when the heartbeat returns.
+
+The topic name and the `edge` token are in `secrets/edge.yaml`
+(`outside-alert-topic`, `ntfy-heartbeat-token`); `40_openbao-config` copies the
+token into `secret/ntfy/ntfy`. Subscribe to that topic in the app on server
+`https://ntfy.sh`; anyone who knows the name can read it, so it is long and
+random and the messages say nothing beyond "home is unreachable".
+
+It fires when home-server, the home connection, the frp tunnel, Traefik, Mimir's
+Alertmanager or ntfy is down. It cannot report the edge itself being down.
 
 ## Flux
 

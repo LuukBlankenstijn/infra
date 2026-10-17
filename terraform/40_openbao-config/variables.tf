@@ -39,3 +39,9 @@ variable "netbird_secrets" {
   type        = string
   sensitive   = true
 }
+
+variable "ntfy_heartbeat_token" {
+  description = "ntfy token the edge host uses to read topic heartbeat, also deployed to the edge by sops-nix. Exported from secrets/edge.yaml by .envrc; never set it by hand."
+  type        = string
+  sensitive   = true
+}
