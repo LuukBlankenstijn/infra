@@ -17,3 +17,7 @@ spec:
       relabelings:
         - targetLabel: job
           replacement: apiserver
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: up|apiserver_request_total|apiserver_request_terminations_total|apiserver_client_certificate_expiration_seconds_.+|aggregator_unavailable_apiservice.*|apiserver_storage_objects|apiserver_storage_size_bytes|etcd_db_total_size_in_bytes
+          action: keep

@@ -188,7 +188,17 @@ spec:
               insecure_skip_verify = true
             }
 
+            forward_to = [prometheus.relabel.kubelet.receiver]
+          }
+
+          prometheus.relabel "kubelet" {
             forward_to = [prometheus.remote_write.mimir.receiver]
+
+            rule {
+              source_labels = ["__name__"]
+              regex         = "up|kubelet_.+|storage_operation_.+|volume_manager_.+|process_.+"
+              action        = "keep"
+            }
           }
 
           prometheus.scrape "cadvisor" {
