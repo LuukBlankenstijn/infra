@@ -32,6 +32,11 @@ comin on each host polls `main` of this repository and switches to
 `nixosConfigurations.<hostname>` when its output changes. A merged commit is a
 deploy.
 
+comin only deploys a `main` that descends from the commit it deployed last. A
+host whose comin followed another repository rejects this one until its state is
+reset: deploy it once by hand, then `systemctl stop comin`, move `/var/lib/comin`
+aside and start comin again.
+
 nix-config is a flake input pinned in `flake.lock`. Renovate opens a PR when
 nix-config's `main` moves and automerges it once `check` passes, so a change to a
 shared module reaches these hosts without a manual bump.
@@ -59,6 +64,7 @@ key and the host's key; see [Secrets](cluster/secrets.md#sops).
 | --- | --- | --- |
 | `edge.yaml` | `frp-token` | frps |
 | `home-server.yaml` | `password` | hashed login password for `luuk` |
+| `openbao/home-assistant.yaml` | `openbao/role_id`, `openbao/secret_id` | AppRole `device-home-assistant` for nix-config's `cfg.services.alloy`; encrypted only to the admin key, so the host needs its recipient added before it can enable Alloy |
 
 A reinstalled host has a new SSH host key, so its recipient in `.sops.yaml`
 changes and the file needs `sops updatekeys` before sops-nix can decrypt.
