@@ -74,6 +74,8 @@ nav:
       - Postgres: databases/postgres.md
       - MariaDB: databases/mariadb.md
       - Backups: databases/backups.md
-  - Observability: observability/index.md
+  - Observability:
+      - Metrics and logs: observability/index.md
+      - Alerting: observability/alerting.md
   - OpenTofu:
       - Roots: terraform/roots.md

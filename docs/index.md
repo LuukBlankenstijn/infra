@@ -24,6 +24,7 @@ and the OpenTofu roots that configure what runs on them.
 | Shared database servers | [Postgres](databases/postgres.md), [MariaDB](databases/mariadb.md) |
 | What is backed up, where, and how to restore | [Backups](databases/backups.md) |
 | Metrics, logs, Grafana, device ingest over mTLS | [Observability](observability/index.md) |
+| Alerts to the phone through ntfy | [Alerting](observability/alerting.md) |
 
 ## Applications
 
@@ -36,6 +37,7 @@ Everything in `flux/50_apps`. Hostnames are under `luukblankenstijn.nl`.
 | Grimmory | `grimmory` | MariaDB `grimmory`, Longhorn volumes `data`, `books` |
 | Longhorn UI | `longhorn`, behind Authentik forward auth | - |
 | Minecraft | Traefik entrypoints `minecraft` (25565/tcp) and `voicechat-udp` (24454/udp) on the node | Longhorn volume |
+| ntfy | `ntfy`, mTLS only | Longhorn volume `data` (SQLite) |
 | NetBird | `netbird` | Postgres `netbird`, `netbird_events`, `netbird_idp`, Longhorn volume `netbird-data` |
 | Ollama | no ingress; NetBird sidecar only | Longhorn volume for models |
 | Shelfmark | `shelfmark`, behind Authentik forward auth | Longhorn volumes `books`, `config`, `downloads` |

@@ -36,10 +36,11 @@ flowchart LR
 | kube-state-metrics | chart `kube-state-metrics` from `prometheus-community` | `8.2.0` | - |
 | node-exporter | chart `prometheus-node-exporter` from `prometheus-community`, host network and PID | `4.56.1` | - |
 
-Everything runs one replica. Mimir runs monolithic (`-target=all`) and is
-configured entirely by container arguments, so a changed flag rolls the pod.
-Its ruler reads rules from an empty directory; there is no Alertmanager and no
-alerting.
+Everything runs one replica. Mimir runs monolithic with its Alertmanager
+(`-target=all,alertmanager`) and is configured entirely by container arguments,
+so a changed flag rolls the pod. It accepts up to 500 000 active series
+(`-ingester.max-global-series-per-user`). Rules, the Alertmanager and
+notifications are on [Alerting](alerting.md).
 
 Both stores are single-tenant: Loki runs with `auth_enabled: false` and Mimir
 with `-auth.multitenancy-enabled=false` (every series lands in tenant
@@ -50,7 +51,7 @@ with `-auth.multitenancy-enabled=false` (every series lands in tenant
 | Store | Bucket | Prefix | Retention |
 | --- | --- | --- | --- |
 | Loki | `luuk-loki` | chunks, index and ruler share the bucket | 30 days, `limits_config.retention_period: 720h` applied by the compactor |
-| Mimir | `luuk-mimir` | `blocks` | 30 days, `-compactor.blocks-retention-period=30d` |
+| Mimir | `luuk-mimir` | `blocks`; rules under `ruler` | 30 days, `-compactor.blocks-retention-period=30d` |
 
 The buckets live on Hetzner Object Storage (`fsn1.your-objectstorage.com`,
 region `fsn1`, path-style) and are created by `terraform/40_s3-buckets`.
@@ -79,10 +80,21 @@ collectors.
 
 | Job | Target |
 | --- | --- |
-| `kubelet`, `cadvisor` | each node's kubelet on 10250, `/metrics` and `/metrics/cadvisor` |
+| `kubelet` | each node's kubelet on 10250, `/metrics` and `/metrics/cadvisor`, told apart by label `metrics_path` |
+| `apiserver` | the `default/kubernetes` endpoints on 6443 |
 | `kube-state-metrics` | Service `observability/kube-state-metrics`, port `http` |
 | `node-exporter` | the node-exporter pods on 9100; host metrics of `home-server` |
+| `comin`, `smartctl`, `nvidia-gpu` | each node's address on 4243, 9633 and 9835 (NixOS services on `home-server`) |
+| `blackbox` | HTTPS probes of the public endpoints (see [Alerting](alerting.md#what-is-collected-for-the-rules)) |
+| from the monitor | every ServiceMonitor and PodMonitor in the cluster |
 | `<namespace>/<app>` | every pod annotated `prometheus.io/scrape: "true"` |
+
+k3s runs the API server, etcd and the controllers inside the kubelet's process,
+so the kubelet's `/metrics` carries their histograms too, around 75 000 series.
+The `kubelet` job keeps only `up`, `kubelet_*`, `storage_operation_*`,
+`volume_manager_*` and `process_*` from that path, and the `apiserver` job only
+the request, termination, certificate-expiry, aggregated-API and storage-size
+series the rules use.
 
 A pod is scraped only when `prometheus.io/port` names a port the pod declares as
 a `containerPort`; `prometheus.io/path` overrides `/metrics`. Grafana, Loki,
@@ -90,9 +102,9 @@ Mimir and both Alloys annotate themselves.
 
 Both collectors add `cluster="home"` to everything they send.
 
-Alloy's chart default lets it read every Secret and ConfigMap in the cluster;
-both releases replace `rbac.rules` with only what their discovery and log
-tailing need.
+`alloy-metrics` runs with the chart's default RBAC, which it needs for the
+ServiceMonitor, PodMonitor and PrometheusRule components; `alloy-logs` replaces
+`rbac.rules` with only what its log tailing needs.
 
 ## Grafana
 
@@ -115,8 +127,10 @@ for the HTTP API.
 Provisioned from the HelmRelease values:
 
 - datasources `Mimir` (Prometheus type, uid `mimir`, default) at
-  `http://mimir.observability.svc.cluster.local:8080/prometheus` and `Loki`
-  (uid `loki`) at `http://loki.observability.svc.cluster.local:3100`;
+  `http://mimir.observability.svc.cluster.local:8080/prometheus`, `Loki`
+  (uid `loki`) at `http://loki.observability.svc.cluster.local:3100` and
+  `Alertmanager` (uid `alertmanager`, implementation `mimir`) at
+  `http://mimir.observability.svc.cluster.local:8080`;
 - dashboards downloaded from grafana.com on every pod start by revision:
   Node Exporter Full (`1860`) and the Kubernetes Views
   (`15757`, `15758`, `15759`, `15760`). They are read-only; copy one to change it.
@@ -229,7 +243,9 @@ Import `phone.p12` on the phone, then delete `phone.key`, `phone.crt`,
 
 Renewal is yearly: the certificate resource has `auto_renew` with 30 days
 `min_seconds_remaining`, so an apply within the last 30 days issues a new one
-and updates `devices/phones/<name>`; bundle and import it again.
+and updates `devices/phones/<name>`; bundle and import it again. The alert
+`PhoneCertificateExpiringSoon` fires when that window opens (see
+[Alerting](alerting.md#phone-setup)).
 
 Revocation: remove the phone from `local.phones` and apply. Its mount and
 intermediate are deleted, `ca.crt` is rewritten without it, and Traefik rejects
