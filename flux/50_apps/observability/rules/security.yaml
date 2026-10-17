@@ -1,0 +1,32 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: security
+  namespace: observability
+  labels:
+    rules.luukblankenstijn.nl/backend: loki
+spec:
+  groups:
+    - name: logins
+      rules:
+        - alert: AuthentikLoginFailures
+          expr: sum(count_over_time({namespace="authentik"} |= "login_failed" [15m])) > 5
+          labels:
+            group: security
+            severity: warning
+          annotations:
+            summary: "{{ $value }} failed Authentik logins in 15 minutes"
+        - alert: VaultwardenLoginFailures
+          expr: sum(count_over_time({namespace="vaultwarden"} |~ "(?i)username or password is incorrect" [15m])) > 5
+          labels:
+            group: security
+            severity: warning
+          annotations:
+            summary: "{{ $value }} failed Vaultwarden logins in 15 minutes"
+        - alert: SshLogin
+          expr: sum by (host) (count_over_time({unit="sshd.service"} |= "Accepted " [5m])) > 0
+          labels:
+            group: security
+            severity: info
+          annotations:
+            summary: "SSH login on {{ $labels.host }}"
