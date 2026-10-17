@@ -82,7 +82,9 @@ must never overlap.
 frps also carries the [Pi tunnel](../apps/home-assistant.md#the-pi-tunnel):
 `stcp` and `xtcp` proxies from `home-gateway` with visitors in namespace
 `pi-tunnel`. They bind no port on the edge, so `allowPorts` and the firewall do
-not change; `xtcp` uses the STUN server on 3478/udp for hole punching.
+not change. `xtcp` uses the public STUN server `stun.easyvoip.com` for hole
+punching, because frp needs RFC 5780 `OTHER-ADDRESS` and coturn on one IP has
+none.
 
 ## Traefik
 

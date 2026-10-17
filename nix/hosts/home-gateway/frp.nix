@@ -46,7 +46,7 @@ in
         token = "{{ .Envs.FRP_TOKEN }}";
       };
       transport.tls.enable = true;
-      natHoleStunServer = "hertzner.luukblankenstijn.nl:3478";
+      natHoleStunServer = "stun.easyvoip.com:3478";
       inherit proxies;
     };
   };

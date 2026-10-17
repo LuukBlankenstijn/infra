@@ -63,13 +63,15 @@ zigbee2mqtt publishes Home Assistant discovery under `homeassistant/`.
   and the device root. OpenSSL needs the root to accept a chain, so any device
   certificate passes the handshake; the ACL only grants topics to
   `home-gateway`, so other devices can connect but neither read nor write.
-- **Passwords:** an initContainer hashes `home_assistant_password` and
+- **Passwords and ACL:** an initContainer copies the ACL and hashes `home_assistant_password` and
   `exporter_password` from `secret/home-assistant/mqtt` into an in-memory
   password file.
 - **Reload:** mosquitto reads certificates, CA and ACL only at start and on
-  SIGHUP. The sidecar `reload` shares the pod's process namespace, hashes the ACL,
-  certificate, key and CA every minute and sends `SIGHUP` when they change, so
-  cert-manager renewals and CA changes take effect without a restart. A change to
+  SIGHUP, and wants the ACL owned by itself with mode 0600, so it reads a copy in
+  the in-memory `auth` volume. The sidecar `reload` shares the pod's process
+  namespace and hashes the ConfigMap ACL, certificate, key and CA every minute;
+  on a change it refreshes the ACL copy and sends `SIGHUP`, so cert-manager
+  renewals, CA and ACL changes take effect without a restart. A change to
   `mosquitto.conf` needs a rollout restart.
 - **NetworkPolicy `mosquitto`:** `8883` only from namespace `traefik`, `1883`
   only from the Home Assistant and exporter pods.
@@ -89,8 +91,9 @@ port is opened on the edge and nothing listens publicly.
   secret key.
 - **In the cluster** (`flux/40_services/pi-tunnel`): an frpc with only visitors.
   Per target, an `xtcp` visitor listens on `0.0.0.0:<port>` and tries a direct
-  connection first (NAT hole punching with STUN on
-  `hertzner.luukblankenstijn.nl:3478`); when that does not succeed within one
+  connection first (NAT hole punching with the public STUN server
+  `stun.easyvoip.com:3478`; frp needs RFC 5780 `OTHER-ADDRESS`, which the edge's
+  coturn cannot give with a single IP); when that does not succeed within one
   second it falls back to the `stcp` visitor `<target>-relay`, which relays
   through frps. `keepTunnelOpen` keeps the direct tunnel up between requests.
   A Service per target points at the visitor port.

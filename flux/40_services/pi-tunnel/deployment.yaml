@@ -8,7 +8,7 @@ data:
     serverAddr = "hertzner.luukblankenstijn.nl"
     serverPort = 7000
     loginFailExit = false
-    natHoleStunServer = "hertzner.luukblankenstijn.nl:3478"
+    natHoleStunServer = "stun.easyvoip.com:3478"
 
     auth.method = "token"
     auth.token = "{{ .Envs.FRP_TOKEN }}"
