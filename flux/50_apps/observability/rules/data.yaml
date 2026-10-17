@@ -107,7 +107,7 @@ spec:
           annotations:
             summary: "Longhorn's daily-backup job last succeeded {{ $value | humanizeDuration }} ago"
         - alert: LonghornBackupTargetUnavailable
-          expr: max by (backup_target) (longhorn_backup_target_status) == 0
+          expr: max by (backup_target) (longhorn_backup_target_status{condition="unavailable"}) == 1 or absent(longhorn_backup_target_status{condition="unavailable"})
           for: 15m
           labels:
             severity: warning
