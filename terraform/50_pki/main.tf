@@ -254,3 +254,37 @@ resource "vault_kv_secret_v2" "phone" {
     ca_chain    = vault_pki_secret_backend_cert.phone[each.key].ca_chain
   })
 }
+
+resource "vault_kv_secret_v2" "device_certificates" {
+  mount = "secret"
+  name  = "observability/device-certificates"
+
+  data_json = jsonencode({
+    for name in keys(local.phones) : "${name}.crt" => vault_pki_secret_backend_cert.phone[name].certificate
+  })
+}
+
+resource "vault_policy" "device_certificates_read" {
+  name = "pki-observability-device-certificates"
+
+  policy = <<-EOT
+    path "secret/data/${vault_kv_secret_v2.device_certificates.name}" {
+      capabilities = ["read"]
+    }
+
+    path "secret/metadata/${vault_kv_secret_v2.device_certificates.name}" {
+      capabilities = ["read"]
+    }
+  EOT
+}
+
+resource "vault_kubernetes_auth_backend_role" "observability" {
+  backend   = "kubernetes"
+  role_name = "pki-observability"
+
+  bound_service_account_names      = ["*"]
+  bound_service_account_namespaces = ["observability"]
+
+  token_policies = [vault_policy.device_certificates_read.name]
+  token_ttl      = 3600
+}

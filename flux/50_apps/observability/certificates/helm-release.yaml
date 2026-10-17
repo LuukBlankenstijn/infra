@@ -1,0 +1,40 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: x509-certificate-exporter
+  namespace: observability
+spec:
+  releaseName: x509-certificate-exporter
+  interval: 1h
+  chart:
+    spec:
+      chart: x509-certificate-exporter
+      version: "4.2.0"
+      sourceRef:
+        kind: HelmRepository
+        name: enix
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    secretsExporter:
+      includeNamespaces:
+        - observability
+      includeLabels:
+        - x509.luukblankenstijn.nl/watch=true
+      secretTypes:
+        - type: Opaque
+          key: phone.crt
+    hostPathsExporter:
+      daemonSets: {}
+    prometheusServiceMonitor:
+      create: true
+    prometheusRules:
+      create: false
+    rbac:
+      create: false
+      secretsExporter:
+        serviceAccountName: x509-certificate-exporter

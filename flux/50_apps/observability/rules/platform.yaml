@@ -48,6 +48,29 @@ spec:
             severity: warning
           annotations:
             summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in {{ $value | humanizeDuration }} and has not been renewed"
+        - alert: PhoneCertificateExpiringSoon
+          expr: (x509_cert_not_after{secret_name="device-certificates"} - time()) < 30 * 86400
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Phone client certificate {{ $labels.secret_key }} expires in {{ $value | humanizeDuration }}"
+            description: "Without it the phone stops receiving alerts. Run tofu apply in terraform/50_pki to renew it, then import the new .p12 in the ntfy app."
+        - alert: PhoneCertificateExpiringSoon
+          expr: (x509_cert_not_after{secret_name="device-certificates"} - time()) < 7 * 86400
+          for: 1h
+          labels:
+            severity: critical
+          annotations:
+            summary: "Phone client certificate {{ $labels.secret_key }} expires in {{ $value | humanizeDuration }}"
+            description: "Without it the phone stops receiving alerts. Run tofu apply in terraform/50_pki to renew it, then import the new .p12 in the ntfy app."
+        - alert: CertificateExporterDown
+          expr: absent(x509_cert_not_after{secret_name="device-certificates"})
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "The phone certificate expiry is not being measured"
         - alert: PublicCertificateExpiringSoon
           expr: (probe_ssl_earliest_cert_expiry{job="blackbox"} - time()) < 14 * 86400
           for: 1h
