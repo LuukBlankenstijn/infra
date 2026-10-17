@@ -85,7 +85,7 @@ collectors.
 | `kube-state-metrics` | Service `observability/kube-state-metrics`, port `http` |
 | `node-exporter` | the node-exporter pods on 9100; host metrics of `home-server` |
 | `comin`, `smartctl`, `nvidia-gpu` | each node's address on 4243, 9633 and 9835 (NixOS services on `home-server`) |
-| `blackbox` | HTTPS probes of the public endpoints (see [Alerting](alerting.md#what-is-collected-for-the-rules)) |
+| `blackbox` | HTTPS probes of the public endpoints and a TLS probe of `mqtt.luukblankenstijn.nl:443` (see [Alerting](alerting.md#what-is-collected-for-the-rules)) |
 | from the monitor | every ServiceMonitor and PodMonitor in the cluster |
 | `<namespace>/<app>` | every pod annotated `prometheus.io/scrape: "true"` |
 
@@ -179,14 +179,14 @@ All keys are EC P-256. Traefik never trusts the root. `50_pki` writes `ca.crt`
 at `secret/observability/device-ca`: the hosts intermediate followed by every
 phone intermediate. SecretStore `traefik/pki` reads it with role `pki-traefik`
 (policy `pki-traefik-device-ca`, bound to namespace `traefik`), and
-ExternalSecret `traefik/device-ca` refreshes it every 5 minutes. Revocation is
+ExternalSecret `traefik/device-ca` refreshes it every 5 minutes. Mosquitto checks client certificates itself and gets the hosts intermediate plus the root from `secret/home-assistant/device-hosts-ca` (role `pki-home-assistant`, see [Home Assistant](../apps/home-assistant.md#mosquitto)). Revocation is
 therefore never a CRL lookup (Traefik checks none): a CA that is not in
 `ca.crt` is not accepted.
 
 ### Hosts
 
 Hosts renew their own certificate from OpenBao. For every entry in
-`local.hosts` (`zenbook`, `thinkpad`, `home-assistant`, `edge`), the root
+`local.hosts` (`zenbook`, `thinkpad`, `home-gateway`, `edge`), the root
 creates:
 
 - PKI role `pki-hosts/roles/<host>`: client certificates only, CN exactly

@@ -68,9 +68,9 @@ spec:
         group: platform
       rules:
         - alert: FrpTunnelDown
-          expr: max(frp_server_client_counts) == 0
+          expr: sum(frp_server_proxy_counts_detailed{type="tcp", name=~"http|https"}) < 2 or absent(frp_server_proxy_counts_detailed{type="tcp", name=~"http|https"})
           for: 5m
           labels:
             severity: critical
           annotations:
-            summary: "No frpc is connected to the edge; nothing public reaches the cluster"
+            summary: "The cluster's http/https proxies are not registered on the edge; nothing public reaches the cluster"

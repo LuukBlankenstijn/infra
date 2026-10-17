@@ -341,7 +341,7 @@ spec:
           }
 
           prometheus.exporter.blackbox "public" {
-            config = "{ modules: { https: { prober: http, timeout: 10s, http: { preferred_ip_protocol: ip4, follow_redirects: false, fail_if_not_ssl: true, valid_status_codes: [200, 301, 302, 303, 307, 308, 401, 403] } } } }"
+            config = "{ modules: { https: { prober: http, timeout: 10s, http: { preferred_ip_protocol: ip4, follow_redirects: false, fail_if_not_ssl: true, valid_status_codes: [200, 301, 302, 303, 307, 308, 401, 403] } }, mqtts: { prober: tcp, timeout: 10s, tcp: { preferred_ip_protocol: ip4, tls: true, tls_config: { min_version: TLS13 } } } } }"
 
             target {
               name    = "authentik"
@@ -390,6 +390,12 @@ spec:
               address = "https://longhorn.luukblankenstijn.nl/"
               module  = "https"
             }
+
+            target {
+              name    = "mqtt"
+              address = "mqtt.luukblankenstijn.nl:443"
+              module  = "mqtts"
+            }
           }
 
           discovery.relabel "blackbox" {
@@ -402,7 +408,7 @@ spec:
 
             rule {
               source_labels = ["__param_target"]
-              regex         = "https://([^/]+).*"
+              regex         = "(?:https://)?([^/:]+).*"
               target_label  = "instance"
             }
           }

@@ -77,6 +77,13 @@ The Deployment has one replica and `strategy: Recreate`. frps rejects a second
 client registering a proxy name that is already registered, so two frpc pods
 must never overlap.
 
+## Secret proxies
+
+frps also carries the [Pi tunnel](../apps/home-assistant.md#the-pi-tunnel):
+`stcp` and `xtcp` proxies from `home-gateway` with visitors in namespace
+`pi-tunnel`. They bind no port on the edge, so `allowPorts` and the firewall do
+not change; `xtcp` uses the STUN server on 3478/udp for hole punching.
+
 ## Traefik
 
 Traefik (`flux/20_controllers/traefik`) runs as a DaemonSet with
@@ -86,6 +93,8 @@ see the real client address. `web` redirects to `websecure`. TLS uses the defaul
 TLSStore certificate `wildcard-luukblankenstijn-nl-tls` (`luukblankenstijn.nl`
 and `*.luukblankenstijn.nl`, Let's Encrypt DNS-01 through Cloudflare, ClusterIssuer
 `letsencrypt-dns`).
+
+`mqtt.luukblankenstijn.nl` on 443 is a TCP route with TLS passthrough to mosquitto; see [Home Assistant](../apps/home-assistant.md#mosquitto).
 
 The edge forwards only 80 and 443. Other Traefik entrypoints (`minecraft`,
 `voicechat-udp`) are reachable on the node's LAN address only.

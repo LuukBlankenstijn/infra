@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mqtt-exporter
+  namespace: home-assistant
+data:
+  config.yaml: |
+    mqtt:
+      server: tcp://mosquitto.home-assistant.svc:1883
+      client_id: mqtt-exporter
+      topic_path: zigbee2mqtt/bridge/state
+      device_id_regex: "(?P<deviceid>[^/]+)/bridge/state"
+      qos: 1
+    cache:
+      timeout: -1
+    metrics:
+      - prom_name: zigbee2mqtt_bridge_online
+        mqtt_name: state
+        help: 1 while zigbee2mqtt's retained bridge state is online
+        type: gauge
+        omit_timestamp: true
+        string_value_mapping:
+          map:
+            online: 1
+            offline: 0
+          error_value: 0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mqtt-exporter
+  namespace: home-assistant
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: { app: mqtt-exporter }
+  template:
+    metadata:
+      labels: { app: mqtt-exporter }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9641"
+    spec:
+      securityContext:
+        runAsUser: 65534
+        runAsGroup: 65534
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: mqtt2prometheus
+          image: ghcr.io/hikhvar/mqtt2prometheus:v0.1.7
+          args: ["-config", "/etc/mqtt2prometheus/config.yaml"]
+          env:
+            - name: MQTT2PROM_MQTT_USER
+              value: exporter
+            - name: MQTT2PROM_MQTT_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: mqtt, key: exporter_password }
+          ports:
+            - name: metrics
+              containerPort: 9641
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/mqtt2prometheus
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: mqtt-exporter

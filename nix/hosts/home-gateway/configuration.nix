@@ -2,11 +2,16 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./frp.nix
+    ./zigbee2mqtt.nix
   ];
 
   cfg = {
     server.enable = true;
-    secrets.password.enable = false;
+    secrets = {
+      file = ../../../secrets/home-gateway.yaml;
+      password.enable = false;
+    };
     networking.netbird = {
       enable = true;
       profiles.netbird.managementUrl = "https://netbird.luukblankenstijn.nl";
@@ -16,7 +21,14 @@
         enable = true;
         url = "https://github.com/LuukBlankenstijn/infra.git";
       };
-      home-assistant.enable = true;
+      alloy = {
+        enable = true;
+        scrapeTargets.comin = "127.0.0.1:4243";
+      };
+    };
+    deviceCert = {
+      enable = true;
+      secretsFile = ../../../secrets/openbao/home-gateway.yaml;
     };
 
     users.luuk = {

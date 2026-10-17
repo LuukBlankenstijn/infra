@@ -36,7 +36,7 @@ Loki's ruler sends to the same Alertmanager.
 | Flux, certificates, ingress, OpenBao, external-secrets, device certificates | `rules/platform.yaml` |
 | Postgres, MariaDB, Longhorn, their backups and the weekly restore test | `rules/data.yaml` |
 | edge, disks, GPU, comin, the frp tunnel | `rules/infra.yaml` |
-| public endpoints probed from inside the cluster | `rules/apps.yaml` |
+| public endpoints probed from inside the cluster; Home Assistant and mosquitto workloads | `rules/apps.yaml` |
 | Alertmanager, rulers, ingestion, ntfy, Alloy | `rules/meta.yaml` |
 | login failures and SSH logins, from logs | `rules/security.yaml` (Loki) |
 
@@ -189,11 +189,13 @@ Beyond the jobs in [In-cluster collection](index.md#in-cluster-collection):
 
 | Signal | Source |
 | --- | --- |
-| Public endpoints and their certificates | Alloy's blackbox exporter, HTTPS probes of Authentik, Vaultwarden, Grafana, Grimmory, Shelfmark, NetBird, OpenBao and Longhorn through public DNS, so through the edge and the tunnel; `job="blackbox"`, `instance=<host>` |
+| Public endpoints and their certificates | Alloy's blackbox exporter, HTTPS probes of Authentik, Vaultwarden, Grafana, Grimmory, Shelfmark, NetBird, OpenBao and Longhorn, and a TLS 1.3 probe of `mqtt.luukblankenstijn.nl:443`, through public DNS, so through the edge and the tunnel; `job="blackbox"`, `instance=<host>`. The MQTT probe completes the handshake before mosquitto rejects the missing client certificate, so it still measures the served certificate |
+| zigbee2mqtt connection | `mqtt-exporter` in namespace `home-assistant`, `zigbee2mqtt_bridge_online` from the retained `zigbee2mqtt/bridge/state` |
+| frp proxies per name | `frp_server_proxy_counts_detailed{type, name}` from frps; `FrpTunnelDown` watches `http` and `https` |
 | Postgres and its backups | PodMonitor `postgres/postgres` (CNPG instance metrics incl. `barman_cloud_*`) |
 | MariaDB | mysqld-exporter deployed by mariadb-operator (`spec.metrics.enabled`) |
 | MariaDB and Longhorn backup schedule | kube-state-metrics Job and CronJob metrics |
 | Longhorn | chart ServiceMonitor |
 | OpenBao, external-secrets, Authentik, mariadb-operator, CNPG operator, CoreDNS | ServiceMonitors / PodMonitors |
 | comin, disk SMART, GPU on `home-server` | NixOS exporters on the node (`nix/hosts/home-server`), scraped by `alloy-metrics` on ports 4243, 9633 and 9835 |
-| comin and frps on `edge` | the host's Alloy (`cfg.services.alloy.scrapeTargets`) |
+| comin and frps on `edge`, comin on `home-gateway` | the host's Alloy (`cfg.services.alloy.scrapeTargets`) |

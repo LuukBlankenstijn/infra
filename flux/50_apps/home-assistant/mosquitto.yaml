@@ -1,0 +1,220 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto
+  namespace: home-assistant
+data:
+  mosquitto.conf: |
+    per_listener_settings true
+    persistence true
+    persistence_location /mosquitto/data/
+    log_dest stdout
+    log_type error
+    log_type warning
+    log_type notice
+    log_type information
+
+    listener 1883
+    password_file /mosquitto/auth/passwd
+    acl_file /mosquitto/config/acl
+
+    listener 8883
+    certfile /mosquitto/tls/tls.crt
+    keyfile /mosquitto/tls/tls.key
+    cafile /mosquitto/ca/ca.crt
+    require_certificate true
+    use_identity_as_username true
+    acl_file /mosquitto/config/acl
+  acl: |
+    user home-assistant
+    topic readwrite #
+
+    user exporter
+    topic read zigbee2mqtt/bridge/state
+
+    user home-gateway.devices.luukblankenstijn.nl
+    topic readwrite zigbee2mqtt/#
+    topic readwrite homeassistant/#
+  reload.sh: |
+    fingerprint() {
+      cat /mosquitto/config/acl /mosquitto/tls/tls.crt /mosquitto/tls/tls.key /mosquitto/ca/ca.crt | sha256sum
+    }
+    last="$(fingerprint)"
+    while sleep 60; do
+      current="$(fingerprint)"
+      if [ "$current" != "$last" ]; then
+        pkill -HUP -x mosquitto && last="$current"
+      fi
+    done
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto
+  namespace: home-assistant
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: { app: mosquitto }
+  template:
+    metadata:
+      labels: { app: mosquitto }
+    spec:
+      shareProcessNamespace: true
+      securityContext:
+        runAsUser: 1883
+        runAsGroup: 1883
+        fsGroup: 1883
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: passwd
+          image: eclipse-mosquitto:2.0.22
+          command:
+            - sh
+            - -ec
+            - |
+              touch /mosquitto/auth/passwd
+              chmod 0600 /mosquitto/auth/passwd
+              mosquitto_passwd -b /mosquitto/auth/passwd home-assistant "$HOME_ASSISTANT_PASSWORD"
+              mosquitto_passwd -b /mosquitto/auth/passwd exporter "$EXPORTER_PASSWORD"
+          env:
+            - name: HOME_ASSISTANT_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: mqtt, key: home_assistant_password }
+            - name: EXPORTER_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: mqtt, key: exporter_password }
+          securityContext: &restricted
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: auth
+              mountPath: /mosquitto/auth
+      containers:
+        - name: mosquitto
+          image: eclipse-mosquitto:2.0.22
+          command: ["mosquitto", "-c", "/mosquitto/config/mosquitto.conf"]
+          ports:
+            - name: mqtt
+              containerPort: 1883
+            - name: mqtts
+              containerPort: 8883
+          readinessProbe:
+            tcpSocket:
+              port: mqtt
+          livenessProbe:
+            tcpSocket:
+              port: mqtt
+            periodSeconds: 30
+          securityContext: *restricted
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 128Mi
+          volumeMounts: &mounts
+            - name: config
+              mountPath: /mosquitto/config
+              readOnly: true
+            - name: auth
+              mountPath: /mosquitto/auth
+              readOnly: true
+            - name: tls
+              mountPath: /mosquitto/tls
+              readOnly: true
+            - name: ca
+              mountPath: /mosquitto/ca
+              readOnly: true
+            - name: data
+              mountPath: /mosquitto/data
+        - name: reload
+          image: eclipse-mosquitto:2.0.22
+          command: ["sh", "/mosquitto/config/reload.sh"]
+          securityContext: *restricted
+          resources:
+            requests:
+              cpu: 1m
+              memory: 4Mi
+            limits:
+              memory: 16Mi
+          volumeMounts: *mounts
+      volumes:
+        - name: config
+          configMap:
+            name: mosquitto
+        - name: auth
+          emptyDir:
+            medium: Memory
+        - name: tls
+          secret:
+            secretName: mqtt-tls
+        - name: ca
+          secret:
+            secretName: device-hosts-ca
+        - name: data
+          persistentVolumeClaim:
+            claimName: mosquitto
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto
+  namespace: home-assistant
+spec:
+  selector: { app: mosquitto }
+  ports:
+    - name: mqtt
+      port: 1883
+      targetPort: mqtt
+    - name: mqtts
+      port: 8883
+      targetPort: mqtts
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: mqtt
+  namespace: home-assistant
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: HostSNI(`mqtt.luukblankenstijn.nl`)
+      services:
+        - name: mosquitto
+          port: 8883
+  tls:
+    passthrough: true
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mosquitto
+  namespace: home-assistant
+spec:
+  podSelector:
+    matchLabels: { app: mosquitto }
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - port: 8883
+    - from:
+        - podSelector:
+            matchLabels: { app: home-assistant }
+        - podSelector:
+            matchLabels: { app: mqtt-exporter }
+      ports:
+        - port: 1883

@@ -2,10 +2,10 @@ locals {
   device_domain = "devices.luukblankenstijn.nl"
 
   hosts = {
-    zenbook        = {}
-    thinkpad       = {}
-    home-assistant = {}
-    edge           = {}
+    zenbook      = {}
+    thinkpad     = {}
+    home-gateway = {}
+    edge         = {}
   }
 
   phones = {
@@ -286,5 +286,39 @@ resource "vault_kubernetes_auth_backend_role" "observability" {
   bound_service_account_namespaces = ["observability"]
 
   token_policies = [vault_policy.device_certificates_read.name]
+  token_ttl      = 3600
+}
+
+resource "vault_kv_secret_v2" "device_hosts_ca" {
+  mount = "secret"
+  name  = "home-assistant/device-hosts-ca"
+
+  data_json = jsonencode({
+    "ca.crt" = "${vault_pki_secret_backend_root_sign_intermediate.hosts.certificate}\n${vault_pki_secret_backend_root_cert.device_ca.certificate}\n"
+  })
+}
+
+resource "vault_policy" "device_hosts_ca_read" {
+  name = "pki-home-assistant-device-hosts-ca"
+
+  policy = <<-EOT
+    path "secret/data/${vault_kv_secret_v2.device_hosts_ca.name}" {
+      capabilities = ["read"]
+    }
+
+    path "secret/metadata/${vault_kv_secret_v2.device_hosts_ca.name}" {
+      capabilities = ["read"]
+    }
+  EOT
+}
+
+resource "vault_kubernetes_auth_backend_role" "home_assistant" {
+  backend   = "kubernetes"
+  role_name = "pki-home-assistant"
+
+  bound_service_account_names      = ["*"]
+  bound_service_account_namespaces = ["home-assistant"]
+
+  token_policies = [vault_policy.device_hosts_ca_read.name]
   token_ttl      = 3600
 }

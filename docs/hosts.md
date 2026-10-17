@@ -8,7 +8,7 @@ which also defines the laptops.
 | --- | --- | --- | --- |
 | `edge` | `x86_64-linux` | `49.12.197.36` | public ingress, see [Edge](cluster/edge.md) |
 | `home-server` | `x86_64-linux` | `192.168.1.78` | the k3s node |
-| `home-assistant` | `aarch64-linux` | LAN, Raspberry Pi booting from a USB SSD | Home Assistant |
+| `home-gateway` | `aarch64-linux` | LAN, Raspberry Pi booting from a USB SSD | zigbee2mqtt and the [Pi tunnel](apps/home-assistant.md#the-pi-tunnel) |
 
 ## How a host is built
 
@@ -24,7 +24,7 @@ Options every host here sets:
 | --- | --- |
 | `cfg.server.enable` | sshd, keys from `https://github.com/LuukBlankenstijn.keys`, passwordless sudo, firewall with 22/tcp open |
 | `cfg.services.comin.url` | `https://github.com/LuukBlankenstijn/infra.git` |
-| `cfg.secrets.file` | this repo's `secrets/<host>.yaml`; `home-assistant` has none |
+| `cfg.secrets.file` | this repo's `secrets/<host>.yaml` |
 
 ## Deploying
 
@@ -52,7 +52,7 @@ For a NixOS release jump use `boot` and reboot: switching across releases on a
 running host can hang it.
 
 `check` evaluates every host (`nix flake check`) and builds each host's closure,
-`home-assistant` on an arm64 runner.
+`home-gateway` on an arm64 runner.
 
 ## Secrets
 
@@ -64,7 +64,8 @@ key and the host's key; see [Secrets](cluster/secrets.md#sops).
 | --- | --- | --- |
 | `edge.yaml` | `frp-token` | frps |
 | `home-server.yaml` | `password` | hashed login password for `luuk` |
-| `openbao/home-assistant.yaml` | `openbao/role_id`, `openbao/secret_id` | AppRole `device-home-assistant` for nix-config's `cfg.deviceCert`; encrypted only to the admin key, so the host needs its recipient added before it can enable the device certificate |
+| `home-gateway.yaml` | `frp-token`, `pi-tunnel-secret-key` | frpc of the [Pi tunnel](apps/home-assistant.md#the-pi-tunnel); `40_openbao-config` also reads the secret key |
+| `openbao/edge.yaml`, `openbao/home-gateway.yaml` | `openbao/role_id`, `openbao/secret_id` | AppRole `device-<host>` for nix-config's `cfg.deviceCert` |
 
 A reinstalled host has a new SSH host key, so its recipient in `.sops.yaml`
 changes and the file needs `sops updatekeys` before sops-nix can decrypt.

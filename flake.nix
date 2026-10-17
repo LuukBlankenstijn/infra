@@ -26,7 +26,7 @@
       nixosConfigurations = {
         edge = host "edge" "x86_64-linux";
         home-server = host "home-server" "x86_64-linux";
-        home-assistant = host "home-assistant" "aarch64-linux";
+        home-gateway = host "home-gateway" "aarch64-linux";
       };
 
       packages = forAllSystems (system: {

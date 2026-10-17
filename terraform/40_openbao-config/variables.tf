@@ -45,3 +45,9 @@ variable "ntfy_heartbeat_token" {
   type        = string
   sensitive   = true
 }
+
+variable "pi_tunnel_secret_key" {
+  description = "frp stcp/xtcp secret key shared by the visitors in namespace pi-tunnel and the proxies on home-gateway. Exported from secrets/home-gateway.yaml by .envrc; never set it by hand."
+  type        = string
+  sensitive   = true
+}

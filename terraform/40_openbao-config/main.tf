@@ -38,6 +38,14 @@ locals {
     "observability/alertmanager" = {
       ntfy_token = local.ntfy_alertmanager_token
     }
+    "home-assistant/mqtt" = {
+      home_assistant_password = random_password.mqtt_home_assistant.result
+      exporter_password       = random_password.mqtt_exporter.result
+    }
+    "pi-tunnel/frp" = {
+      token      = var.frp_token
+      secret_key = var.pi_tunnel_secret_key
+    }
   }
 
   namespace_policies = {
@@ -89,6 +97,16 @@ resource "random_string" "ntfy_alertmanager_token" {
 
 resource "random_password" "authentik_bootstrap_token" {
   length  = 64
+  special = false
+}
+
+resource "random_password" "mqtt_home_assistant" {
+  length  = 32
+  special = false
+}
+
+resource "random_password" "mqtt_exporter" {
+  length  = 32
   special = false
 }
 

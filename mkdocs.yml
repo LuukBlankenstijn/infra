@@ -70,6 +70,8 @@ nav:
       - NetBird: cluster/netbird.md
       - NetBird reverse proxy: cluster/reverse-proxy.md
   - NixOS hosts: hosts.md
+  - Apps:
+      - Home Assistant: apps/home-assistant.md
   - Databases:
       - Postgres: databases/postgres.md
       - MariaDB: databases/mariadb.md

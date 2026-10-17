@@ -8,7 +8,7 @@ and the OpenTofu roots that configure what runs on them.
 | --- | --- |
 | `flux/` | Everything the cluster runs, reconciled by Flux in numbered layers. See [Flux layers](cluster/layers.md). |
 | `terraform/` | OpenTofu roots. The two-digit prefix is the apply order on a fresh setup; equal prefixes are independent. See [Roots](terraform/roots.md). |
-| `nix/` | The NixOS hosts `edge`, `home-server` and `home-assistant` (`nix/hosts/`), the dev shell, `mint-kubeconfig` and the docs build. See [NixOS hosts](hosts.md). |
+| `nix/` | The NixOS hosts `edge`, `home-server` and `home-gateway` (`nix/hosts/`), the dev shell, `mint-kubeconfig` and the docs build. See [NixOS hosts](hosts.md). |
 | `secrets/` | sops-encrypted bootstrap material needed before OpenBao exists. See [Secrets](cluster/secrets.md). |
 
 ## What runs where
@@ -35,6 +35,7 @@ Everything in `flux/50_apps`. Hostnames are under `luukblankenstijn.nl`.
 | Authentik | `auth` | Postgres `authentik` |
 | Grafana | `grafana`; device ingest on `logs` and `metrics`, mTLS only | Postgres `grafana`; Loki and Mimir in buckets `luuk-loki`, `luuk-mimir` |
 | Grimmory | `grimmory` | MariaDB `grimmory`, Longhorn volumes `data`, `books` |
+| Home Assistant | `home-assistant`, mTLS only; zigbee2mqtt frontend on `zigbee2mqtt`, mTLS only; MQTT on `mqtt`, client certificate. See [Home Assistant](apps/home-assistant.md) | Longhorn volumes `config`, `mosquitto` |
 | Longhorn UI | `longhorn`, behind Authentik forward auth | - |
 | Minecraft | Traefik entrypoints `minecraft` (25565/tcp) and `voicechat-udp` (24454/udp) on the node | Longhorn volume |
 | ntfy | `ntfy`, mTLS only | Longhorn volume `data` (SQLite) |
@@ -63,7 +64,7 @@ root needs.
 OpenTofu applies are manual, from the operator machine; the NixOS hosts deploy
 themselves with comin (see [NixOS hosts](hosts.md#deploying)). CI
 (`.github/workflows/check.yml`) runs `nix flake check`, which builds these docs
-and evaluates every host, and builds every host's closure (`home-assistant` on
+and evaluates every host, and builds every host's closure (`home-gateway` on
 an arm64 runner). It runs only when the flake, `nix/`, `secrets/`,
 `.sops.yaml`, the docs or the workflow change. The `flake` job sums up the
 others and is the required check on `main`; it passes when they are skipped.

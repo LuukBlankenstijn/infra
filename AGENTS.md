@@ -10,7 +10,7 @@ every area.
 | `flux/clusters/home` | FluxInstance and one Kustomization per layer |
 | `flux/NN_<layer>/` | what the cluster runs; the number is the apply order (`dependsOn`, `wait: true`) |
 | `terraform/NN_<root>/` | OpenTofu roots, applied by hand from this machine; S3 state, encrypted |
-| `nix/hosts/<host>/` | NixOS hosts `edge`, `home-server`, `home-assistant`, built with `nix-config.lib.mkHost` |
+| `nix/hosts/<host>/` | NixOS hosts `edge`, `home-server`, `home-gateway`, built with `nix-config.lib.mkHost` |
 | `secrets/` | sops files (admin key; host files also to that host's key) |
 | `docs/` | mkdocs site, `nix build .#docs` (strict) |
 

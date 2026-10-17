@@ -1,0 +1,121 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frpc
+  namespace: pi-tunnel
+data:
+  frpc.toml: |
+    serverAddr = "hertzner.luukblankenstijn.nl"
+    serverPort = 7000
+    loginFailExit = false
+    natHoleStunServer = "hertzner.luukblankenstijn.nl:3478"
+
+    auth.method = "token"
+    auth.token = "{{ .Envs.FRP_TOKEN }}"
+
+    transport.tls.enable = true
+
+    [[visitors]]
+    name = "zigbee2mqtt-relay"
+    type = "stcp"
+    serverName = "zigbee2mqtt"
+    secretKey = "{{ .Envs.PI_TUNNEL_SECRET_KEY }}"
+    bindPort = -1
+
+    [[visitors]]
+    name = "zigbee2mqtt"
+    type = "xtcp"
+    serverName = "zigbee2mqtt-p2p"
+    secretKey = "{{ .Envs.PI_TUNNEL_SECRET_KEY }}"
+    bindAddr = "0.0.0.0"
+    bindPort = 8080
+    keepTunnelOpen = true
+    fallbackTo = "zigbee2mqtt-relay"
+    fallbackTimeoutMs = 1000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frpc
+  namespace: pi-tunnel
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: frpc
+  template:
+    metadata:
+      labels:
+        app: frpc
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: frpc
+          image: fatedier/frpc:v0.71.1
+          args:
+            - "-c"
+            - /etc/frp/frpc.toml
+          envFrom:
+            - secretRef:
+                name: frpc
+          ports:
+            - name: zigbee2mqtt
+              containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/frp
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: frpc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zigbee2mqtt
+  namespace: pi-tunnel
+spec:
+  selector:
+    app: frpc
+  ports:
+    - name: http
+      port: 8080
+      targetPort: zigbee2mqtt
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: zigbee2mqtt
+  namespace: pi-tunnel
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`zigbee2mqtt.luukblankenstijn.nl`)
+      kind: Rule
+      services:
+        - name: zigbee2mqtt
+          port: 8080
+  tls:
+    options:
+      name: device-mtls
+      namespace: traefik
