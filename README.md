@@ -1,6 +1,11 @@
 # infra
 
-Home infrastructure: the k3s cluster reconciled by Flux (`flux/`), the edge VPS
-(`nix/hosts/edge`), and the OpenTofu roots (`terraform/`).
+Home infrastructure in one repository:
 
-Documentation lives in `docs/` (`nix build .#docs`).
+- `flux/`: the k3s cluster, reconciled by Flux
+- `nix/hosts/`: the NixOS hosts (edge, home-server, home-assistant), built on
+  [nix-config](https://github.com/LuukBlankenstijn/nix-config)'s modules and
+  deployed by comin
+- `terraform/`: OpenTofu roots
+
+Docs are in `docs/`; build them with `nix build .#docs`.
