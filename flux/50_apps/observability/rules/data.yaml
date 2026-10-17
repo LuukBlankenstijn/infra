@@ -120,3 +120,24 @@ spec:
             severity: warning
           annotations:
             summary: "Longhorn storage on {{ $labels.node }} is {{ $value | humanizePercentage }} full"
+    - name: restore-test
+      labels:
+        group: data
+      rules:
+        - alert: RestoreTestFailed
+          expr: |
+            max(kube_job_status_start_time{namespace="restore-test"} and on (job_name) kube_job_status_failed{namespace="restore-test"} > 0)
+              >= max(kube_job_status_start_time{namespace="restore-test"})
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "The latest backup restore test failed"
+            description: "kubectl -n restore-test logs job/<latest job> shows which check failed."
+        - alert: RestoreTestStale
+          expr: time() - max(kube_job_status_completion_time{namespace="restore-test"}) > 8 * 86400 or absent(kube_job_status_completion_time{namespace="restore-test"})
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "No backup restore test succeeded in the last 8 days"

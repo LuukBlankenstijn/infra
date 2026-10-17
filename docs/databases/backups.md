@@ -6,7 +6,7 @@ Everything is written to Hetzner Object Storage, `https://fsn1.your-objectstorag
 | Data | Mechanism | Destination | Schedule | Retention |
 | --- | --- | --- | --- | --- |
 | Postgres | Barman Cloud plugin: WAL archive + base backups | `s3://luuk-postgres/` | WAL continuously, base backup 03:00 | 30 days |
-| MariaDB | `PhysicalBackup` + `PointInTimeRecovery` binlog archive | `s3://luuk-mariadb/` (`base/`, `binlog/`) | base backup 03:00, binlogs as they close | 30 days (`720h`) |
+| MariaDB | `PhysicalBackup` | `s3://luuk-mariadb/base/` | base backup 03:00 | 30 days (`720h`) |
 | Longhorn volumes in recurring-job group `default` | `RecurringJob` `daily-backup` | bucket `luuk` (`s3://luuk@fsn1/`) | 02:30 | 14 backups |
 | Same volumes, on the node | `RecurringJob` `daily-snapshot` | local snapshots | 03:03 | 31 snapshots |
 | OpenTofu state | S3 backend, encrypted | bucket `luuk`, `<root>/terraform.tfstate` | every apply | - |
@@ -65,22 +65,24 @@ two clusters archiving to one prefix corrupt each other's WAL timeline.
 | Object | Does |
 | --- | --- |
 | `PhysicalBackup` `mariadb-daily` | `mariadb-backup` base backup, `0 3 * * *` (five fields), `immediate: true`, gzip, `maxRetention: 720h`, prefix `base` |
-| `PointInTimeRecovery` `mariadb` | binlog archive, prefix `binlog`, gzip, base backups from `mariadb-daily`; referenced by the `MariaDB` through `pointInTimeRecoveryRef` |
+| `PointInTimeRecovery` `mariadb` | binlog archive to prefix `binlog`, referenced by the `MariaDB` through `pointInTimeRecoveryRef`; inactive, see below |
 | `ExternalSecret` `mariadb-s3` | bucket key from OpenBao `s3/mariadb/mariadb` |
 
 `mariadb-daily` passes `--disable-ssl-verify-server-cert`: it connects to the
-server by its Service address, which the certificate does not name. Archive
-state is in the `MariaDB` status:
+server by its Service address, which the certificate does not name.
 
-```sh
-kubectl -n mariadb get mariadb mariadb -o jsonpath='{.status.pointInTimeRecovery}'
-```
+Binary logs are not archived. mariadb-operator archives binlogs only in its
+asynchronous replication topology; this instance is standalone, so the server
+runs with `log_bin` off and the `PointInTimeRecovery` object does nothing. A
+restore goes back to the last 03:00 base backup: up to a day of writes is lost.
 
 ### Restore
 
-Create a new `MariaDB` with `bootstrapFrom.pointInTimeRecoveryRef: {name: mariadb}`
-and a `targetRecoveryTime`. It must archive to a different binlog prefix: the
-prefix has to be empty when archiving starts.
+Create a new `MariaDB` with
+`bootstrapFrom.backupRef: {name: mariadb-daily, kind: PhysicalBackup}` (the
+newest backup) or add `targetRecoveryTime` to pick the newest backup before that
+time. Reuse `rootPasswordSecretKeyRef` `mariadb-root`: the restored data has the
+original root password.
 
 ## Longhorn
 
@@ -107,6 +109,39 @@ Restore a volume from its backup in the Longhorn UI
 (`https://longhorn.luukblankenstijn.nl`, behind Authentik), then bind it to the
 workload's PVC through a PV that names the restored volume.
 
+## Restore test
+
+Every Sunday 05:00 (Europe/Amsterdam) CronJob `restore-test/restore-test`
+(`flux/40_services/restore-test`) restores both databases next to production
+and deletes the copies again:
+
+1. **Postgres.** It writes the current time to `restore_test.marker` in database
+   `postgres`, switches WAL and waits until that segment is archived. It then
+   creates Cluster `postgres/restore-test`, bootstrapped from ObjectStore
+   `postgres` (`serverName: postgres`) without a WAL archiver of its own, so it
+   only reads the archive. The copy must contain the marker and every database
+   and table of production.
+2. **MariaDB.** It creates MariaDB `mariadb/restore-test` from the newest
+   `mariadb-daily` backup. The copy must contain every database and table of
+   production, apart from ones created since 03:00.
+
+The script is `run.sh` in ConfigMap `restore-test`; it runs in `alpine/k8s` as
+ServiceAccount `restore-test/restore-test`, whose Roles in `postgres` and
+`mariadb` allow only creating and deleting those two kinds plus exec into pods.
+It checks over `kubectl exec` with the database images' own clients. The copies
+use `longhorn-single`, which no Longhorn backup job picks up, and are deleted
+on exit, also after a failure.
+
+To run it now:
+
+```sh
+kubectl -n restore-test create job --from=cronjob/restore-test restore-test-manual
+kubectl -n restore-test logs -f job/restore-test-manual
+```
+
+`RestoreTestFailed` fires when the newest run failed, `RestoreTestStale` when no
+run succeeded in 8 days.
+
 ## OpenBao contents
 
 OpenBao's Raft data is a Longhorn volume and is only readable with the seal key
@@ -130,6 +165,10 @@ same values.
 - **The admin age key.** It is the only recipient of every `secrets/*.yaml`
   except `edge.yaml`. Without it the state passphrase, the sealing key and the
   external credentials are gone, and with the sealing key every SealedSecret.
-- **Restore tests.** Nothing restores a backup on a schedule. Failed, stale and
-  missing backups and a stalled WAL archive do alert (group `data`, see
-  [Alerting](../observability/alerting.md)).
+- **MariaDB point-in-time recovery.** See [MariaDB](#mariadb): only the nightly
+  base backups exist.
+- **Longhorn restore tests.** Only the databases are test-restored.
+
+Failed, stale and missing backups, a stalled WAL archive and a failed or
+overdue restore test alert in group `data` (see
+[Alerting](../observability/alerting.md)).

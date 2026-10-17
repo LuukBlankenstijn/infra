@@ -1,0 +1,123 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: restore-test
+  namespace: restore-test
+data:
+  postgres.yaml: |
+    apiVersion: postgresql.cnpg.io/v1
+    kind: Cluster
+    metadata:
+      name: restore-test
+      namespace: postgres
+    spec:
+      instances: 1
+      enableSuperuserAccess: false
+      storage:
+        storageClass: longhorn-single
+        size: 20Gi
+      bootstrap:
+        recovery:
+          source: origin
+      externalClusters:
+        - name: origin
+          plugin:
+            name: barman-cloud.cloudnative-pg.io
+            parameters:
+              barmanObjectName: postgres
+              serverName: postgres
+  mariadb.yaml: |
+    apiVersion: k8s.mariadb.com/v1alpha1
+    kind: MariaDB
+    metadata:
+      name: restore-test
+      namespace: mariadb
+    spec:
+      image: docker.io/library/mariadb:12.3.3
+      replicas: 1
+      storage:
+        storageClassName: longhorn-single
+        size: 5Gi
+      rootPasswordSecretKeyRef:
+        name: mariadb-root
+        key: password
+      bootstrapFrom:
+        backupRef:
+          name: mariadb-daily
+          kind: PhysicalBackup
+  run.sh: |
+    set -euo pipefail
+
+    cleanup() {
+      kubectl -n postgres delete cluster restore-test --ignore-not-found --wait=true --timeout=10m || true
+      kubectl -n mariadb delete mariadb restore-test --ignore-not-found --wait=true --timeout=10m || true
+    }
+    trap cleanup EXIT
+    cleanup
+
+    fail=0
+    report() { echo "FAIL: $*" >&2; fail=1; }
+
+    psql_in() {
+      local pod=$1 db=$2 sql=$3
+      kubectl -n postgres exec "$pod" -c postgres -- psql -v ON_ERROR_STOP=1 -qtA -d "$db" -c "$sql"
+    }
+
+    pg_inventory() {
+      local pod=$1
+      for db in $(psql_in "$pod" postgres "select datname from pg_database where not datistemplate order by 1"); do
+        echo "database $db"
+        psql_in "$pod" "$db" "select 'table $db.' || schemaname || '.' || tablename from pg_tables where schemaname not in ('pg_catalog', 'information_schema') order by 1"
+      done | sort
+    }
+
+    mariadb_in() {
+      local pod=$1 sql=$2
+      kubectl -n mariadb exec "$pod" -c mariadb -- sh -c 'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" -N -B -e "$0"' "$sql"
+    }
+
+    mariadb_inventory() {
+      mariadb_in "$1" "select concat('table ', table_schema, '.', table_name) from information_schema.tables where table_schema not in ('mysql', 'information_schema', 'performance_schema', 'sys') union select concat('database ', schema_name) from information_schema.schemata where schema_name not in ('mysql', 'information_schema', 'performance_schema', 'sys')" | sort
+    }
+
+    echo "== Postgres"
+    pg_prod=$(kubectl -n postgres get pods -l cnpg.io/cluster=postgres,cnpg.io/instanceRole=primary -o jsonpath='{.items[0].metadata.name}')
+    psql_in "$pg_prod" postgres "create schema if not exists restore_test"
+    psql_in "$pg_prod" postgres "create table if not exists restore_test.marker (id int primary key, at timestamptz not null)"
+    marker=$(psql_in "$pg_prod" postgres "insert into restore_test.marker values (1, now()) on conflict (id) do update set at = excluded.at returning at::text")
+    wal=$(psql_in "$pg_prod" postgres "select pg_walfile_name(pg_switch_wal())")
+    echo "marker $marker in WAL $wal"
+    for _ in $(seq 60); do
+      [ "$(psql_in "$pg_prod" postgres "select coalesce(last_archived_wal >= '$wal', false) from pg_stat_archiver")" = t ] && break
+      sleep 10
+    done
+    [ "$(psql_in "$pg_prod" postgres "select coalesce(last_archived_wal >= '$wal', false) from pg_stat_archiver")" = t ] || report "Postgres did not archive WAL $wal within 10 minutes"
+    pg_inventory "$pg_prod" > /tmp/pg-prod
+
+    kubectl apply -f /config/postgres.yaml
+    if kubectl -n postgres wait cluster/restore-test --for=condition=Ready --timeout=30m; then
+      restored=$(psql_in restore-test-1 postgres "select at::text from restore_test.marker where id = 1" || true)
+      [ "$restored" = "$marker" ] || report "Postgres restore does not contain the marker written before the test (got '$restored', want '$marker')"
+      pg_inventory restore-test-1 > /tmp/pg-restored
+      missing=$(comm -23 /tmp/pg-prod /tmp/pg-restored)
+      [ -z "$missing" ] || report "Postgres restore is missing: $missing"
+      echo "Postgres: $(wc -l < /tmp/pg-restored) databases and tables restored"
+    else
+      report "Postgres restore did not become ready within 30 minutes"
+      kubectl -n postgres get cluster restore-test -o jsonpath='{.status.phase}: {.status.phaseReason}' || true
+    fi
+    kubectl -n postgres delete cluster restore-test --wait=true --timeout=10m
+
+    echo "== MariaDB"
+    mariadb_inventory mariadb-0 > /tmp/mariadb-prod
+    kubectl apply -f /config/mariadb.yaml
+    if kubectl -n mariadb wait mariadb/restore-test --for=condition=Ready --timeout=30m; then
+      mariadb_inventory restore-test-0 > /tmp/mariadb-restored
+      missing=$(comm -23 /tmp/mariadb-prod /tmp/mariadb-restored)
+      [ -z "$missing" ] || report "MariaDB restore is missing: $missing"
+      echo "MariaDB: $(wc -l < /tmp/mariadb-restored) databases and tables restored"
+    else
+      report "MariaDB restore did not become ready within 30 minutes"
+    fi
+
+    exit $fail

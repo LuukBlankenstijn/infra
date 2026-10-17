@@ -45,5 +45,5 @@ The Service `mariadb` is a LoadBalancer on `192.168.1.78:3306`. OpenTofu connect
 there with `tls = "skip-verify"`, since the address does not match the
 certificate name.
 
-`max_binlog_size = 128M` keeps binary logs closing regularly for the archive;
-see [Backups](backups.md#mariadb).
+Backups are nightly physical backups only; binary logs are not archived (see
+[Backups](backups.md#mariadb)).
