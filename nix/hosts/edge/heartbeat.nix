@@ -1,6 +1,6 @@
 { config, pkgs, ... }:
 let
-  tls = config.cfg.services.alloy.tls;
+  tls = config.cfg.deviceCert;
   check = pkgs.writeShellApplication {
     name = "home-heartbeat-check";
     runtimeInputs = [
@@ -53,7 +53,7 @@ in
       Type = "oneshot";
       ExecStart = "${check}/bin/home-heartbeat-check";
       DynamicUser = true;
-      SupplementaryGroups = [ "alloy" ];
+      SupplementaryGroups = [ tls.group ];
       StateDirectory = "home-heartbeat";
       LoadCredential = [
         "token:${config.sops.secrets."ntfy-heartbeat-token".path}"

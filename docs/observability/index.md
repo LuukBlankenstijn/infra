@@ -208,10 +208,13 @@ What a host needs to renew:
 | Issue | `pki-hosts/issue/<host>` with `common_name=<host>.devices.luukblankenstijn.nl` |
 | Certificate lifetime | 7 days; renew well before that |
 
-The host side (OpenBao Agent rendering the certificate, the AppRole
-credentials delivered by sops-nix, and Alloy on the host) is nix-config's
-`cfg.services.alloy` module. A host enables it in its own configuration: the
-laptops in nix-config, the hosts in `nix/hosts/` here (see
+The host side is nix-config's `cfg.deviceCert` module: OpenBao Agent
+`vault-agent-device-cert` logs in with the AppRole credentials delivered by
+sops-nix and keeps `/run/device-cert/cert.pem` and `key.pem` current, readable
+by group `device-cert`. Its consumers join that group: Alloy
+(`cfg.services.alloy`), the edge heartbeat, and on the laptops Zen, which
+imports the certificate on every renewal. A host enables it in its own
+configuration: the laptops in nix-config, the hosts in `nix/hosts/` here (see
 [NixOS hosts](../hosts.md)).
 
 Removing a host from `local.hosts` and applying deletes its AppRole, policy and

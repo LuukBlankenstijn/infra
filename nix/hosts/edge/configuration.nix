@@ -17,12 +17,12 @@
       enable = true;
       url = "https://github.com/LuukBlankenstijn/infra.git";
     };
+    deviceCert = {
+      enable = true;
+      secretsFile = ../../../secrets/openbao/edge.yaml;
+    };
     services.alloy = {
       enable = true;
-      openbao = {
-        enable = true;
-        secretsFile = ../../../secrets/openbao/edge.yaml;
-      };
       scrapeTargets = {
         comin = "127.0.0.1:4243";
         frps = "127.0.0.1:7500";

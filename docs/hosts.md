@@ -64,7 +64,7 @@ key and the host's key; see [Secrets](cluster/secrets.md#sops).
 | --- | --- | --- |
 | `edge.yaml` | `frp-token` | frps |
 | `home-server.yaml` | `password` | hashed login password for `luuk` |
-| `openbao/home-assistant.yaml` | `openbao/role_id`, `openbao/secret_id` | AppRole `device-home-assistant` for nix-config's `cfg.services.alloy`; encrypted only to the admin key, so the host needs its recipient added before it can enable Alloy |
+| `openbao/home-assistant.yaml` | `openbao/role_id`, `openbao/secret_id` | AppRole `device-home-assistant` for nix-config's `cfg.deviceCert`; encrypted only to the admin key, so the host needs its recipient added before it can enable the device certificate |
 
 A reinstalled host has a new SSH host key, so its recipient in `.sops.yaml`
 changes and the file needs `sops updatekeys` before sops-nix can decrypt.

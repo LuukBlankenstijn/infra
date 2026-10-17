@@ -112,8 +112,9 @@ silent. kube-prometheus-stack's always-firing `Watchdog` covers that:
    (receiver `heartbeat`, priority 1; nobody subscribes to it).
 2. On the edge VPS, timer `home-heartbeat-check` (`nix/hosts/edge/heartbeat.nix`)
    polls `https://ntfy.luukblankenstijn.nl/heartbeat/json?poll=1&since=10m`
-   every 5 minutes, with the edge's own client certificate and ntfy user
-   `edge` (read-only on `heartbeat`).
+   every 5 minutes, with the edge's own client certificate (`cfg.deviceCert`,
+   read through group `device-cert`) and ntfy user `edge` (read-only on
+   `heartbeat`).
 3. If that returns nothing or fails, it posts once, at priority 5, to a topic on
    the public `https://ntfy.sh`, and posts again when the heartbeat returns.
 
