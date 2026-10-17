@@ -61,7 +61,10 @@ root needs.
 OpenTofu applies are manual, from the operator machine; the NixOS hosts deploy
 themselves with comin (see [NixOS hosts](hosts.md#deploying)). CI
 (`.github/workflows/check.yml`) runs `nix flake check`, which builds these docs
-and evaluates every host, and builds the edge closure.
+and evaluates every host, and builds the edge closure. It runs only when the
+flake, `nix/`, `secrets/`, `.sops.yaml`, the docs or the workflow change; for
+other commits the `flake` job is skipped, which counts as passing for the
+required check on `main`.
 
 `nix build .#docs` builds this site with `mkdocs build --strict`: a broken link
 or a page missing from `nav:` fails the build. `mkdocs serve` from the dev shell

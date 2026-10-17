@@ -11,7 +11,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      nix: ${{ steps.filter.outputs.nix }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            nix:
+              - flake.nix
+              - flake.lock
+              - nix/**
+              - secrets/**
+              - .sops.yaml
+              - docs/**
+              - mkdocs.yml
+              - .github/workflows/check.yml
+
   flake:
+    needs: changes
+    if: needs.changes.outputs.nix == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
