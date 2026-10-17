@@ -41,24 +41,6 @@ resource "authentik_policy_binding" "openbao_admins" {
   order  = 0
 }
 
-resource "vault_policy" "operator" {
-  name = "operator"
-
-  policy = <<-EOT
-    path "devices/*" {
-      capabilities = ["read", "list"]
-    }
-
-    path "pki-hosts/issue/*" {
-      capabilities = ["update"]
-    }
-
-    path "sys/mounts" {
-      capabilities = ["read"]
-    }
-  EOT
-}
-
 resource "vault_jwt_auth_backend_role" "authentik" {
   backend   = "oidc"
   role_name = "authentik"
@@ -73,7 +55,7 @@ resource "vault_jwt_auth_backend_role" "authentik" {
     groups = authentik_group.infra_admins.name
   }
 
-  token_policies = [vault_policy.operator.name]
+  token_policies = ["admin"]
   token_ttl      = 3600
 }
 

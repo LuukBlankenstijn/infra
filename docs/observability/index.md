@@ -243,12 +243,10 @@ kubectl -n traefik annotate externalsecret device-ca force-sync=$(date +%s) --ov
 `https://openbao.luukblankenstijn.nl/ui` shows an OIDC login that goes through
 Authentik (application `openbao`, `terraform/50_authentik-config/openbao.tf`;
 auth mount `oidc` from `40_openbao-config`). Only members of the Authentik
-group `infra-admins` (owned by `50_authentik-config/admins.tf`) can log in. Their token carries policy `operator`:
-
-- read and list on mount `devices` (kv-v2, owned by `50_pki`), which holds
-  `hosts/<host>` with the host's AppRole `role_id` and `secret_id`, and
-  `phones/<name>` with the phone's certificate, key and chain;
-- `update` on `pki-hosts/issue/*`, to issue a host certificate by hand.
+group `infra-admins` (owned by `50_authentik-config/admins.tf`) can log in. Their token carries the `admin` policy (every path), so the whole of OpenBao is
+visible. Device credentials are on mount `devices` (kv-v2, owned by `50_pki`):
+`hosts/<host>` holds the host's AppRole `role_id` and `secret_id`,
+`phones/<name>` the phone's certificate, key and chain.
 
 Tokens last one hour.
 
