@@ -51,6 +51,8 @@ data:
     cleanup() {
       kubectl -n postgres delete cluster restore-test --ignore-not-found --wait=true --timeout=10m || true
       kubectl -n mariadb delete mariadb restore-test --ignore-not-found --wait=true --timeout=10m || true
+      kubectl -n mariadb delete pvc -l app.kubernetes.io/instance=restore-test --wait=true --timeout=5m || true
+      kubectl -n postgres delete pvc -l cnpg.io/cluster=restore-test --wait=true --timeout=5m || true
     }
     trap cleanup EXIT
     cleanup
