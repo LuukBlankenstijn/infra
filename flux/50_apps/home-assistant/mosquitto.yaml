@@ -102,6 +102,8 @@ spec:
               readOnly: true
             - name: auth
               mountPath: /mosquitto/auth
+            - name: tmp
+              mountPath: /tmp
       containers:
         - name: mosquitto
           image: eclipse-mosquitto:2.0.22
@@ -167,6 +169,9 @@ spec:
           configMap:
             name: mosquitto
         - name: auth
+          emptyDir:
+            medium: Memory
+        - name: tmp
           emptyDir:
             medium: Memory
         - name: tls

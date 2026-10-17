@@ -34,11 +34,16 @@ flowchart LR
 the image runs as root.
 
 An initContainer copies `configuration.yaml` from ConfigMap `home-assistant` on
-every start, so that file is owned by git; edits in the pod are lost. It trusts
-`X-Forwarded-For` from the pod CIDR `10.42.0.0/16` (Traefik) and includes the
-UI-managed `automations.yaml`, `scenes.yaml` and `scripts.yaml`, which it creates
+every start, so that file is owned by git; edits in the pod are lost. It includes
+the UI-managed `automations.yaml`, `scenes.yaml` and `scripts.yaml`, which it creates
 empty when missing. Everything else (integrations, users, history) lives in
 `.storage` on the volume.
+
+The `http` integration is configured in the UI (Settings → System → Network),
+since YAML for it is deprecated: use `X-Forwarded-For` and trust the pod CIDR
+`10.42.0.0/16` (Traefik), otherwise Home Assistant rejects proxied requests with
+400. A new volume needs this set once; until then reach it with
+`kubectl -n home-assistant port-forward deploy/home-assistant 8123`.
 
 The MQTT integration is set up once in the UI: broker
 `mosquitto.home-assistant.svc`, port `1883`, user `home-assistant`, password

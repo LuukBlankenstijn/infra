@@ -7,11 +7,6 @@ data:
   configuration.yaml: |
     default_config:
 
-    http:
-      use_x_forwarded_for: true
-      trusted_proxies:
-        - 10.42.0.0/16
-
     automation ui: !include automations.yaml
     scene ui: !include scenes.yaml
     script ui: !include scripts.yaml
