@@ -34,7 +34,7 @@ spec:
   pointInTimeRecoveryRef:
     name: mariadb
   metrics:
-    enabled: false
+    enabled: true
   service:
     type: LoadBalancer
 ---

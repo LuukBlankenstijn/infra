@@ -6,6 +6,9 @@ metadata:
 spec:
   releaseName: postgres
   interval: 1h
+  dependsOn:
+    - name: prometheus-operator-crds
+      namespace: flux-system
   chart:
     spec:
       chart: cloudnative-pg
@@ -19,3 +22,6 @@ spec:
     crds: CreateReplace
     remediation:
       retries: 3
+  values:
+    monitoring:
+      podMonitorEnabled: true

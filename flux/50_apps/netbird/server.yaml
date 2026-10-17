@@ -27,6 +27,8 @@ spec:
               containerPort: 80
             - name: health
               containerPort: 9000
+            - name: metrics
+              containerPort: 9090
           readinessProbe:
             tcpSocket:
               port: http

@@ -6,6 +6,9 @@ metadata:
 spec:
   releaseName: external-secrets
   interval: 1h
+  dependsOn:
+    - name: prometheus-operator-crds
+      namespace: flux-system
   chart:
     spec:
       chart: external-secrets
@@ -21,3 +24,5 @@ spec:
       retries: 3
   values:
     installCRDs: true
+    serviceMonitor:
+      enabled: true

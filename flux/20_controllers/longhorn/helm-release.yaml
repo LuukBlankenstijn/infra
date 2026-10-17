@@ -7,6 +7,9 @@ spec:
   releaseName: longhorn
   storageNamespace: flux-system
   interval: 1h
+  dependsOn:
+    - name: prometheus-operator-crds
+      namespace: flux-system
   chart:
     spec:
       chart: longhorn
@@ -28,3 +31,6 @@ spec:
       orphanAutoDeletion: false
     persistence:
       defaultClassReplicaCount: 1
+    metrics:
+      serviceMonitor:
+        enabled: true

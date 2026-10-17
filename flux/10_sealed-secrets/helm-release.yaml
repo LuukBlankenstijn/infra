@@ -21,3 +21,6 @@ spec:
       retries: 3
   values:
     keyrenewperiod: "0"
+    podAnnotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8081"

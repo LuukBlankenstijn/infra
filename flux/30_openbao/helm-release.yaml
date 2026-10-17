@@ -22,6 +22,9 @@ spec:
   values:
     injector:
       enabled: false
+    serverTelemetry:
+      serviceMonitor:
+        enabled: true
     server:
       statefulSet:
         securityContext:

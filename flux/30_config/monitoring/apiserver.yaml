@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: apiserver
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      component: apiserver
+      provider: kubernetes
+  endpoints:
+    - port: https
+      scheme: https
+      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      tlsConfig:
+        insecureSkipVerify: true
+      relabelings:
+        - targetLabel: job
+          replacement: apiserver

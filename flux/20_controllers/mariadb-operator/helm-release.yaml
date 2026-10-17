@@ -30,6 +30,8 @@ spec:
   interval: 1h
   dependsOn:
     - name: mariadb-operator-crds
+    - name: prometheus-operator-crds
+      namespace: flux-system
   chart:
     spec:
       chart: mariadb-operator
@@ -43,3 +45,6 @@ spec:
   upgrade:
     remediation:
       retries: 3
+  values:
+    metrics:
+      enabled: true
