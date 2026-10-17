@@ -55,6 +55,18 @@
         "fatedier/frpc",
         "frp"
       ]
+    },
+    {
+      "matchManagers": [
+        "nix"
+      ],
+      "matchDepNames": [
+        "nix-config"
+      ],
+      "automerge": true
     }
-  ]
+  ],
+  "nix": {
+    "enabled": true
+  }
 }

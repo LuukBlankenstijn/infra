@@ -69,6 +69,7 @@ nav:
       - Secrets: cluster/secrets.md
       - NetBird: cluster/netbird.md
       - NetBird reverse proxy: cluster/reverse-proxy.md
+  - NixOS hosts: hosts.md
   - Databases:
       - Postgres: databases/postgres.md
       - MariaDB: databases/mariadb.md

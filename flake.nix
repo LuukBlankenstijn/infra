@@ -1,17 +1,13 @@
 {
-  description = "Home infrastructure: k3s cluster, edge VPS, OpenTofu roots";
+  description = "Home infrastructure: k3s cluster, its NixOS hosts, OpenTofu roots";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-
-    sops-nix = {
-      url = "github:Mic92/sops-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    nix-config.url = "github:LuukBlankenstijn/nix-config";
+    nixpkgs.follows = "nix-config/nixpkgs";
   };
 
   outputs =
-    inputs@{ nixpkgs, sops-nix, ... }:
+    { nixpkgs, nix-config, ... }:
     let
       systems = [
         "x86_64-linux"
@@ -19,15 +15,18 @@
       ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
       pkgsFor = system: nixpkgs.legacyPackages.${system};
+      host =
+        hostname: system:
+        nix-config.lib.mkHost {
+          inherit hostname system;
+          modules = [ ./nix/hosts/${hostname}/configuration.nix ];
+        };
     in
     {
-      nixosConfigurations.edge = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = { inherit inputs; };
-        modules = [
-          sops-nix.nixosModules.sops
-          ./nix/hosts/edge
-        ];
+      nixosConfigurations = {
+        edge = host "edge" "x86_64-linux";
+        home-server = host "home-server" "x86_64-linux";
+        home-assistant = host "home-assistant" "aarch64-linux";
       };
 
       packages = forAllSystems (system: {

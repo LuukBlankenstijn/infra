@@ -21,7 +21,7 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
 
-      - name: flake evaluates, the edge host builds, docs build
+      - name: flake evaluates, all hosts evaluate, docs build
         run: nix flake check --print-build-logs
 
       - name: edge host closure builds

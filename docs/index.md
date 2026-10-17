@@ -1,20 +1,21 @@
 # Home infrastructure
 
 One repository for the home k3s cluster (`home-server`, a single node on the
-home LAN at `192.168.1.78`), the public edge VPS, and the OpenTofu roots that
-configure what runs on them.
+home LAN at `192.168.1.78`), the public edge VPS, the NixOS hosts they run on,
+and the OpenTofu roots that configure what runs on them.
 
 | Directory | Contents |
 | --- | --- |
 | `flux/` | Everything the cluster runs, reconciled by Flux in numbered layers. See [Flux layers](cluster/layers.md). |
 | `terraform/` | OpenTofu roots. The two-digit prefix is the apply order on a fresh setup; equal prefixes are independent. See [Roots](terraform/roots.md). |
-| `nix/` | The edge host (`nixosConfigurations.edge`), the dev shell, `mint-kubeconfig` and the docs build. |
+| `nix/` | The NixOS hosts `edge`, `home-server` and `home-assistant` (`nix/hosts/`), the dev shell, `mint-kubeconfig` and the docs build. See [NixOS hosts](hosts.md). |
 | `secrets/` | sops-encrypted bootstrap material needed before OpenBao exists. See [Secrets](cluster/secrets.md). |
 
 ## What runs where
 
 | Piece | Page |
 | --- | --- |
+| Operating systems of the edge, the k3s node and Home Assistant | [NixOS hosts](hosts.md) |
 | Internet → edge VPS → frp tunnel → Traefik | [Edge and public ingress](cluster/edge.md) |
 | `kubectl`, Helm and OpenTofu against the cluster | [Cluster access](cluster/access.md) |
 | Secret storage and delivery into namespaces | [OpenBao](cluster/openbao.md), [Secrets](cluster/secrets.md) |
@@ -57,9 +58,10 @@ StatefulSet field, so upgrading needs
 credentials from sops. Each OpenTofu root's `.envrc` adds only the secrets that
 root needs.
 
-Applies are manual, from the operator machine. CI
+OpenTofu applies are manual, from the operator machine; the NixOS hosts deploy
+themselves with comin (see [NixOS hosts](hosts.md#deploying)). CI
 (`.github/workflows/check.yml`) runs `nix flake check`, which builds these docs
-and evaluates the edge host, and builds the edge closure.
+and evaluates every host, and builds the edge closure.
 
 `nix build .#docs` builds this site with `mkdocs build --strict`: a broken link
 or a page missing from `nav:` fails the build. `mkdocs serve` from the dev shell

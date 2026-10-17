@@ -3,6 +3,7 @@ keys:
     - &admin_luuk age14aaw06ykpmrzgp56gyfhu2c0eh4w0k4aavq594tpym7j978hl5cs7qvccc
   hosts:
     - &edge age1xntv2pw9n4ppt8nyshggefnytmyv3lh46lfvw43gnt9v8gs6vgyqq96wpk
+    - &home-server age1xq5p2s3u9lpzr656pt2ra459swvqddkj7ht38gvjath9k5ysgeds36tnrk
 
 creation_rules:
   - path_regex: secrets/edge\.yaml$
@@ -10,6 +11,11 @@ creation_rules:
       - age:
           - *admin_luuk
           - *edge
+  - path_regex: secrets/home-server\.yaml$
+    key_groups:
+      - age:
+          - *admin_luuk
+          - *home-server
   - path_regex: secrets/[^/]+\.yaml$
     key_groups:
       - age:

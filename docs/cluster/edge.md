@@ -20,7 +20,7 @@ flowchart LR
 | Server | Hetzner Cloud `edge`, type `cx22`, location `nbg1`, `49.12.197.36` |
 | DNS | `hertzner.luukblankenstijn.nl` A record to the server, `*.luukblankenstijn.nl` CNAME to that name, both unproxied |
 | OS | NixOS from `nixosConfigurations.edge` (`nix/hosts/edge`) |
-| Login | user `luuk`, keys from `https://github.com/LuukBlankenstijn.keys` (flake input `ssh-keys`), passwordless sudo, no root login, no passwords |
+| Login | user `luuk`, keys from `https://github.com/LuukBlankenstijn.keys`, passwordless sudo, no root login, no passwords; see [NixOS hosts](../hosts.md) |
 
 `terraform/10_edge` owns the server, its Hetzner firewall and both DNS records.
 `image`, `ssh_keys`, `user_data` and `public_net` are in `ignore_changes`, and
@@ -55,19 +55,8 @@ port changes in that file only.
 
 ### Deploying the host
 
-```sh
-nixos-rebuild switch --flake .#edge \
-  --target-host luuk@49.12.197.36 --build-host luuk@49.12.197.36 --sudo
-```
-
-The closure is built on the edge itself. For a NixOS release jump use `boot`
-instead of `switch` and reboot: switching across releases on the running host
-can hang it.
-
-`secrets/edge.yaml` is encrypted to the admin key and the edge's age key, which
-is derived from its SSH host key (`ssh-to-age`); see [Secrets](secrets.md#sops).
-A reinstalled host has a new host key, so `.sops.yaml` and `edge.yaml` need its
-new age recipient before sops-nix can decrypt.
+comin deploys `main`; building, manual deploys and the sops recipient are on
+[NixOS hosts](../hosts.md).
 
 ## The tunnel
 

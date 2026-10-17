@@ -195,8 +195,10 @@ What a host needs to renew:
 | Certificate lifetime | 7 days; renew well before that |
 
 The host side (OpenBao Agent rendering the certificate, the AppRole
-credentials delivered by sops-nix, and Alloy on the host) belongs in the
-`nix-config` repository and is not part of this repository.
+credentials delivered by sops-nix, and Alloy on the host) is nix-config's
+`cfg.services.alloy` module. A host enables it in its own configuration: the
+laptops in nix-config, the hosts in `nix/hosts/` here (see
+[NixOS hosts](../hosts.md)).
 
 Removing a host from `local.hosts` and applying deletes its AppRole, policy and
 PKI role. The host can no longer renew, and its last certificate expires within

@@ -4,7 +4,7 @@ Three stores, each for what the others cannot hold:
 
 | Store | Holds | Read by |
 | --- | --- | --- |
-| sops, `secrets/*.yaml` | external credentials and bootstrap material needed before OpenBao or outside the cluster | direnv (`.envrc`) into OpenTofu; sops-nix on the edge |
+| sops, `secrets/*.yaml` | external credentials and bootstrap material needed before OpenBao or outside the cluster | direnv (`.envrc`) into OpenTofu; sops-nix on the NixOS hosts |
 | SealedSecrets in `flux/` | the three secrets consumed at or before the `openbao` layer | the sealed-secrets controller |
 | [OpenBao](openbao.md) | every other in-cluster secret | external-secrets, per-namespace SecretStores |
 
@@ -13,8 +13,9 @@ Nothing secret is committed in plain text.
 ## sops
 
 `.sops.yaml` encrypts every `secrets/*.yaml` to the admin age key;
-`secrets/edge.yaml` is also encrypted to the edge host's age key so sops-nix can
-decrypt it on the host.
+`secrets/edge.yaml` and `secrets/home-server.yaml` are also encrypted to that
+host's age key so sops-nix can decrypt them on the host (see
+[NixOS hosts](../hosts.md#secrets)).
 
 | File | Keys | Consumed by |
 | --- | --- | --- |
@@ -22,6 +23,7 @@ decrypt it on the host.
 | `s3.yaml` | `access_key_id`, `secret_access_key` | root `.envrc` → `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` for the state backend; `40_s3-buckets` |
 | `sealed-secrets.yaml` | `tls_crt`, `tls_key` | `20_cluster-bootstrap` (the pinned sealing key) |
 | `edge.yaml` | `frp-token` | edge host (sops-nix); `40_openbao-config` → `secret/frpc/frpc` |
+| `home-server.yaml` | `password` | home-server (sops-nix), login password of `luuk` |
 | `apps.yaml` | `authentik.secret_key`, `authentik.smtp_password`, `vaultwarden.smtp_password` | `40_openbao-config` |
 | `netbird.yaml` | `owner_email`, `owner_password`, `api_token`, `proxy_token` | `40_openbao-config` (`api_token`, `proxy_token`); `60_netbird-config` (`api_token`) |
 | `cloudflare.yaml` | `api_token`, `zone_id` | `10_edge` |
