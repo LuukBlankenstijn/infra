@@ -1,0 +1,60 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: meta
+  namespace: observability
+spec:
+  groups:
+    - name: observability
+      labels:
+        group: meta
+      rules:
+        - alert: AlertmanagerNotificationsFailing
+          expr: sum by (integration) (rate(cortex_alertmanager_notifications_failed_total[10m])) > 0
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Alertmanager fails to deliver notifications via {{ $labels.integration }}"
+        - alert: RuleEvaluationFailing
+          expr: sum by (rule_group) (rate(cortex_prometheus_rule_evaluation_failures_total[10m])) > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Mimir rule group {{ $labels.rule_group }} fails to evaluate"
+        - alert: LokiRuleEvaluationFailing
+          expr: sum by (rule_group) (rate(loki_prometheus_rule_evaluation_failures_total[10m])) > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Loki rule group {{ $labels.rule_group }} fails to evaluate"
+        - alert: MimirIngestionStopped
+          expr: sum(rate(cortex_distributor_received_samples_total[10m])) == 0
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Mimir receives no samples"
+        - alert: LokiIngestionStopped
+          expr: sum(rate(loki_distributor_lines_received_total[10m])) == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Loki receives no log lines"
+        - alert: NtfyDown
+          expr: absent(up{namespace="ntfy"} == 1)
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "ntfy is down; phone notifications are not delivered"
+        - alert: AlloyConfigFailing
+          expr: sum by (pod, controller_path) (alloy_component_controller_running_components{health_type!="healthy"}) > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Alloy {{ $labels.pod }} has unhealthy components"

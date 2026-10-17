@@ -1,0 +1,71 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: platform
+  namespace: observability
+spec:
+  groups:
+    - name: flux
+      labels:
+        group: platform
+      rules:
+        - alert: FluxResourceNotReady
+          expr: max by (kind, exported_namespace, name, reason) (flux_resource_info{ready="False", suspended="False"}) == 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} is not ready ({{ $labels.reason }})"
+        - alert: FluxResourceSuspended
+          expr: max by (kind, exported_namespace, name) (flux_resource_info{suspended="True"}) == 1
+          for: 24h
+          labels:
+            severity: info
+          annotations:
+            summary: "{{ $labels.kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} has been suspended for a day"
+        - alert: FluxInstanceNotReady
+          expr: max by (name) (flux_instance_info{ready!="True"}) == 1
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "FluxInstance {{ $labels.name }} is not ready; nothing in git is being applied"
+    - name: certificates
+      labels:
+        group: platform
+      rules:
+        - alert: CertificateNotReady
+          expr: max by (namespace, name) (certmanager_certificate_ready_status{condition="False"}) == 1
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} is not ready"
+        - alert: CertificateExpiringSoon
+          expr: (certmanager_certificate_expiration_timestamp_seconds - time()) < 14 * 86400
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in {{ $value | humanizeDuration }} and has not been renewed"
+        - alert: PublicCertificateExpiringSoon
+          expr: (probe_ssl_earliest_cert_expiry{job="blackbox"} - time()) < 14 * 86400
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "The certificate served for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"
+    - name: ingress
+      labels:
+        group: platform
+      rules:
+        - alert: TraefikHighErrorRate
+          expr: |
+            sum by (service) (rate(traefik_service_requests_total{code=~"5.."}[10m]))
+              / sum by (service) (rate(traefik_service_requests_total[10m])) > 0.05
+            and sum by (service) (rate(traefik_service_requests_total[10m])) > 0.05
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $value | humanizePercentage }} of requests to {{ $labels.service }} fail with 5xx"

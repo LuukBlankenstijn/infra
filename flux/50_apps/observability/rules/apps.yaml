@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: apps
+  namespace: observability
+spec:
+  groups:
+    - name: public-endpoints
+      labels:
+        group: apps
+      rules:
+        - alert: PublicEndpointDown
+          expr: probe_success{job="blackbox"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "{{ $labels.instance }} is unreachable from the internet side"
+            description: "The probe goes through public DNS, the edge VPS and the frp tunnel, so this also fires when the tunnel or the edge is down."
