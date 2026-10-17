@@ -11,6 +11,7 @@ spec:
     - source-controller
     - kustomize-controller
     - helm-controller
+    - notification-controller
   cluster:
     type: kubernetes
     multitenant: false

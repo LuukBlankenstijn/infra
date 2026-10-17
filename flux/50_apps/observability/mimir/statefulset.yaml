@@ -46,8 +46,8 @@ spec:
             - -blocks-storage.storage-prefix=blocks
             - -blocks-storage.tsdb.dir=/data/tsdb
             - -blocks-storage.bucket-store.sync-dir=/data/tsdb-sync
-            - -ruler-storage.backend=local
-            - -ruler-storage.local.directory=/etc/mimir/rules
+            - -ruler-storage.backend=s3
+            - -ruler-storage.storage-prefix=ruler
             - -ruler.rule-path=/data/ruler
             - -compactor.data-dir=/data/compactor
             - -compactor.blocks-retention-period=30d
@@ -94,13 +94,8 @@ spec:
               mountPath: /data
             - name: tmp
               mountPath: /tmp
-            - name: rules
-              mountPath: /etc/mimir/rules
-              readOnly: true
       volumes:
         - name: tmp
-          emptyDir: {}
-        - name: rules
           emptyDir: {}
   volumeClaimTemplates:
     - metadata:
