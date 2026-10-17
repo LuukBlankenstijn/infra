@@ -52,7 +52,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: frpc
-          image: fatedier/frpc:v0.66.0
+          image: fatedier/frpc:v0.71.1
           args:
             - "-c"
             - /etc/frp/frpc.toml
