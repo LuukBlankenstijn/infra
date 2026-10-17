@@ -28,8 +28,6 @@ spec:
       secretTypes:
         - type: Opaque
           key: phone.crt
-        - type: Opaque
-          key: browser.crt
     hostPathsExporter:
       daemonSets: {}
     prometheusServiceMonitor:

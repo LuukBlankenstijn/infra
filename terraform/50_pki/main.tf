@@ -9,8 +9,7 @@ locals {
   }
 
   phones = {
-    phone   = {}
-    browser = {}
+    phone = {}
   }
 }
 
