@@ -1,0 +1,76 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: infra
+  namespace: observability
+spec:
+  groups:
+    - name: hosts
+      labels:
+        group: infra
+      rules:
+        - alert: EdgeNotReporting
+          expr: absent(up{host="edge", job="node-exporter"} == 1)
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "The edge VPS sends no metrics"
+            description: "Either the VPS is down, its Alloy cannot reach metrics.luukblankenstijn.nl, or its client certificate stopped renewing."
+        - alert: DiskSmartFailing
+          expr: max by (instance, device) (smartctl_device_smart_status) == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "SMART reports disk {{ $labels.device }} as failing"
+        - alert: DiskTemperatureHigh
+          expr: max by (instance, device) (smartctl_device_temperature{temperature_type="current"}) > 60
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Disk {{ $labels.device }} is at {{ $value }}°C"
+        - alert: GpuTemperatureHigh
+          expr: max by (instance, uuid) (nvidia_smi_temperature_gpu) > 85
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "The GPU is at {{ $value }}°C"
+    - name: deployments
+      labels:
+        group: platform
+      rules:
+        - alert: CominDeploymentFailed
+          expr: max by (host, instance) (comin_last_deployment_failed) == 1 or max by (host, instance) (comin_last_build_failed) == 1 or max by (host, instance) (comin_last_eval_failed) == 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "comin on {{ $labels.host }}{{ $labels.instance }} cannot deploy the current main"
+        - alert: CominFetchFailing
+          expr: max by (host, instance) (comin_last_fetch_failed) == 1
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "comin on {{ $labels.host }}{{ $labels.instance }} cannot fetch the repository"
+        - alert: HostNeedsReboot
+          expr: max by (host, instance) (comin_need_to_reboot) == 1
+          for: 6h
+          labels:
+            severity: info
+          annotations:
+            summary: "{{ $labels.host }}{{ $labels.instance }} runs a new kernel or initrd only after a reboot"
+    - name: tunnel
+      labels:
+        group: platform
+      rules:
+        - alert: FrpTunnelDown
+          expr: max(frp_server_client_counts) == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "No frpc is connected to the edge; nothing public reaches the cluster"
