@@ -27,6 +27,9 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "3100"
       auth_enabled: false
+      rulerConfig:
+        alertmanager_url: http://mimir.observability.svc.cluster.local:8080/alertmanager
+        enable_alertmanager_v2: true
       commonConfig:
         replication_factor: 1
         path_prefix: /var/loki

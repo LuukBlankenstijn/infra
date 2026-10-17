@@ -64,6 +64,14 @@ spec:
             type: loki
             access: proxy
             url: http://loki.observability.svc.cluster.local:3100
+          - name: Alertmanager
+            uid: alertmanager
+            type: alertmanager
+            access: proxy
+            url: http://mimir.observability.svc.cluster.local:8080
+            jsonData:
+              implementation: mimir
+              handleGrafanaManagedAlerts: false
 
     dashboardProviders:
       dashboardproviders.yaml:
