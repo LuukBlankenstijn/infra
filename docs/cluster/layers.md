@@ -1,7 +1,10 @@
 # Flux layers
 
 The FluxInstance in `flux/clusters/home/flux-system/` syncs `flux/clusters/home`
-from `main`. Every numbered directory under `flux/` has one Kustomization there,
+from `main`. It asks for Flux `2.9.x`: flux-operator installs the newest patch
+it embeds, so a Flux patch release arrives with a flux-operator bump (Renovate)
+and never asks for a version the operator does not have yet. A Flux minor
+upgrade is a manual change of that range. Every numbered directory under `flux/` has one Kustomization there,
 with `prune: true`, `wait: true` and ordering only through `dependsOn`:
 
 | Kustomization | Path | Depends on |

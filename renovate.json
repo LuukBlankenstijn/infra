@@ -13,20 +13,6 @@
       "/^flux/.+\\.yaml$/"
     ]
   },
-  "customManagers": [
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^flux/clusters/home/flux-system/flux-instance\\.yaml$/"
-      ],
-      "matchStrings": [
-        "version: \"(?<currentValue>[0-9.]+)\""
-      ],
-      "depNameTemplate": "fluxcd/flux2",
-      "datasourceTemplate": "github-releases",
-      "extractVersionTemplate": "^v(?<version>.*)$"
-    }
-  ],
   "platformAutomerge": true,
   "packageRules": [
     {

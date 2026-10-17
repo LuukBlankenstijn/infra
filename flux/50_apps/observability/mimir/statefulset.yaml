@@ -31,7 +31,7 @@ spec:
         - name: mimir
           image: grafana/mimir:3.1.2
           args:
-            - -target=all
+            - -target=all,alertmanager
             - -auth.multitenancy-enabled=false
             - -usage-stats.enabled=false
             - -activity-tracker.filepath=/data/activity.log
@@ -49,6 +49,11 @@ spec:
             - -ruler-storage.backend=s3
             - -ruler-storage.storage-prefix=ruler
             - -ruler.rule-path=/data/ruler
+            - -ruler.alertmanager-url=http://127.0.0.1:8080/alertmanager
+            - -alertmanager-storage.backend=local
+            - -alertmanager-storage.local.path=/etc/mimir/alertmanager
+            - -alertmanager.storage.path=/data/alertmanager
+            - -alertmanager.sharding-ring.replication-factor=1
             - -compactor.data-dir=/data/compactor
             - -compactor.blocks-retention-period=30d
             - -ingester.ring.replication-factor=1
@@ -94,9 +99,15 @@ spec:
               mountPath: /data
             - name: tmp
               mountPath: /tmp
+            - name: alertmanager-config
+              mountPath: /etc/mimir/alertmanager
+              readOnly: true
       volumes:
         - name: tmp
           emptyDir: {}
+        - name: alertmanager-config
+          secret:
+            secretName: alertmanager-config
   volumeClaimTemplates:
     - metadata:
         name: data
