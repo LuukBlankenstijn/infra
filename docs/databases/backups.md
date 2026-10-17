@@ -127,7 +127,7 @@ and deletes the copies again:
 
 The script is `run.sh` in ConfigMap `restore-test`; it runs in `alpine/k8s` as
 ServiceAccount `restore-test/restore-test`, whose Roles in `postgres` and
-`mariadb` allow only creating and deleting those two kinds plus exec into pods.
+`mariadb` named `restore-test-runner` (CNPG already uses `restore-test` for the cluster's own Role), allow only creating and deleting those two kinds plus exec into pods.
 It checks over `kubectl exec` with the database images' own clients. The copies
 use `longhorn-single`, which no Longhorn backup job picks up, and are deleted
 on exit, also after a failure.

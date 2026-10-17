@@ -7,7 +7,7 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: restore-test
+  name: restore-test-runner
   namespace: postgres
 rules:
   - apiGroups: ["postgresql.cnpg.io"]
@@ -23,12 +23,12 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: restore-test
+  name: restore-test-runner
   namespace: postgres
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: restore-test
+  name: restore-test-runner
 subjects:
   - kind: ServiceAccount
     name: restore-test
@@ -37,7 +37,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: restore-test
+  name: restore-test-runner
   namespace: mariadb
 rules:
   - apiGroups: ["k8s.mariadb.com"]
@@ -53,12 +53,12 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: restore-test
+  name: restore-test-runner
   namespace: mariadb
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: restore-test
+  name: restore-test-runner
 subjects:
   - kind: ServiceAccount
     name: restore-test
