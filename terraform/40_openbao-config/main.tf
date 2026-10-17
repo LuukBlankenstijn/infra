@@ -2,6 +2,8 @@ locals {
   app_secrets     = yamldecode(var.app_secrets)
   netbird_secrets = yamldecode(var.netbird_secrets)
 
+  ntfy_alertmanager_token = "tk_${random_string.ntfy_alertmanager_token.result}"
+
   secrets = {
     "netbird/server" = {
       store_encryption_key = random_bytes.netbird_store_encryption_key.base64
@@ -24,6 +26,15 @@ locals {
     }
     "vaultwarden/vaultwarden" = {
       smtp_password = local.app_secrets.vaultwarden.smtp_password
+    }
+    "ntfy/ntfy" = {
+      luuk_password              = random_password.ntfy_luuk.result
+      luuk_password_hash         = random_password.ntfy_luuk.bcrypt_hash
+      alertmanager_password_hash = random_password.ntfy_alertmanager.bcrypt_hash
+      alertmanager_token         = local.ntfy_alertmanager_token
+    }
+    "observability/alertmanager" = {
+      ntfy_token = local.ntfy_alertmanager_token
     }
   }
 
@@ -50,6 +61,22 @@ resource "random_bytes" "netbird_session_cookie_key" {
 
 resource "random_password" "netbird_auth_secret" {
   length  = 64
+  special = false
+}
+
+resource "random_password" "ntfy_luuk" {
+  length  = 32
+  special = false
+}
+
+resource "random_password" "ntfy_alertmanager" {
+  length  = 32
+  special = false
+}
+
+resource "random_string" "ntfy_alertmanager_token" {
+  length  = 29
+  upper   = false
   special = false
 }
 

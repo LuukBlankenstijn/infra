@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ntfy-templates
+  namespace: ntfy
+data:
+  alertmanager.yml: |
+    title: |
+      {{- $severity := .commonLabels.severity | default "info" -}}
+      {{- if eq .status "resolved" }}✅{{ else if eq $severity "critical" }}🔴{{ else if eq $severity "warning" }}🟠{{ else }}🔵{{ end }}
+      {{- " " }}{{ .groupLabels.alertname | default "Alerts" }}
+      {{- if gt (len .alerts) 1 }} ({{ len .alerts }}){{ end }}
+    message: |
+      {{- range .alerts }}
+      {{ .annotations.summary | default .labels.alertname }}
+      {{- with .annotations.description }}
+      {{ . }}
+      {{- end }}
+      {{- with .labels.namespace }}
+      namespace: {{ . }}
+      {{- end }}
+      {{- with .labels.instance }}
+      instance: {{ . }}
+      {{- end }}
+      {{ end }}
+    priority: |
+      {{- $severity := .commonLabels.severity | default "info" -}}
+      {{- if eq .status "resolved" }}2{{ else if eq $severity "critical" }}5{{ else if eq $severity "warning" }}4{{ else }}2{{ end }}
