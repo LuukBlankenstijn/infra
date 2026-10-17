@@ -16,7 +16,7 @@ jobs:
     outputs:
       nix: ${{ steps.filter.outputs.nix }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - id: filter
         uses: dorny/paths-filter@v3
@@ -37,7 +37,7 @@ jobs:
     if: needs.changes.outputs.nix == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: cachix/install-nix-action@v31
         with:
@@ -62,7 +62,7 @@ jobs:
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: cachix/install-nix-action@v31
         with:
