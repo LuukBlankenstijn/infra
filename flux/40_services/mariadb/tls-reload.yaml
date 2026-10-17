@@ -19,7 +19,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: flush-ssl
-              image: docker.io/library/mariadb:12.3.3
+              image: docker.io/library/mariadb:13.0.2
               env:
                 - name: MYSQL_PWD
                   valueFrom:
