@@ -16,6 +16,11 @@ creation_rules:
       - age:
           - *admin_luuk
           - *home-server
+  - path_regex: secrets/openbao/edge\.yaml$
+    key_groups:
+      - age:
+          - *admin_luuk
+          - *edge
   - path_regex: secrets/openbao/[^/]+\.yaml$
     key_groups:
       - age:

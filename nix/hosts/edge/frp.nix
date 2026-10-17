@@ -23,6 +23,11 @@ in
       };
       transport.tls.force = true;
       allowPorts = map (port: { single = port; }) ports.forwardedTcp;
+      enablePrometheus = true;
+      webServer = {
+        addr = "127.0.0.1";
+        port = 7500;
+      };
     };
   };
 

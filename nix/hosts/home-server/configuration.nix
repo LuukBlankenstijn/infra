@@ -57,5 +57,15 @@
   services.k3s.extraFlags = [ "--resolv-conf=/etc/k3s-resolv.conf" ];
   services.k3s.package = pkgs.k3s_1_36;
 
+  services.prometheus.exporters = {
+    smartctl.enable = true;
+    nvidia-gpu.enable = true;
+  };
+  networking.firewall.interfaces.cni0.allowedTCPPorts = [
+    4243
+    9633
+    9835
+  ];
+
   system.stateVersion = "25.05";
 }

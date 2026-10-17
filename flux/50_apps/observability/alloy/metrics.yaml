@@ -226,6 +226,60 @@ spec:
             forward_to      = [prometheus.remote_write.mimir.receiver]
           }
 
+          discovery.relabel "host_comin" {
+            targets = discovery.relabel.nodes.output
+
+            rule {
+              source_labels = ["__address__"]
+              regex         = "([^:]+):\\d+"
+              replacement   = "$1:4243"
+              target_label  = "__address__"
+            }
+          }
+
+          prometheus.scrape "host_comin" {
+            job_name        = "comin"
+            targets         = discovery.relabel.host_comin.output
+            scrape_interval = "60s"
+            forward_to      = [prometheus.remote_write.mimir.receiver]
+          }
+
+          discovery.relabel "host_smartctl" {
+            targets = discovery.relabel.nodes.output
+
+            rule {
+              source_labels = ["__address__"]
+              regex         = "([^:]+):\\d+"
+              replacement   = "$1:9633"
+              target_label  = "__address__"
+            }
+          }
+
+          prometheus.scrape "host_smartctl" {
+            job_name        = "smartctl"
+            targets         = discovery.relabel.host_smartctl.output
+            scrape_interval = "60s"
+            forward_to      = [prometheus.remote_write.mimir.receiver]
+          }
+
+          discovery.relabel "host_nvidia_gpu" {
+            targets = discovery.relabel.nodes.output
+
+            rule {
+              source_labels = ["__address__"]
+              regex         = "([^:]+):\\d+"
+              replacement   = "$1:9835"
+              target_label  = "__address__"
+            }
+          }
+
+          prometheus.scrape "host_nvidia_gpu" {
+            job_name        = "nvidia-gpu"
+            targets         = discovery.relabel.host_nvidia_gpu.output
+            scrape_interval = "60s"
+            forward_to      = [prometheus.remote_write.mimir.receiver]
+          }
+
           prometheus.operator.servicemonitors "all" {
             forward_to = [prometheus.remote_write.mimir.receiver]
           }

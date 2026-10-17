@@ -502,11 +502,11 @@
         "zen-browser": "zen-browser"
       },
       "locked": {
-        "lastModified": 1792226808,
-        "narHash": "sha256-OvtyehuJ95yZmIPLoC4NP/uVyzqMVNBKdMvijotC72I=",
+        "lastModified": 1792231892,
+        "narHash": "sha256-uXzZDui0unhLCYD1Y32KM3Yrwz/cDExRVPQUBb+69Q4=",
         "owner": "LuukBlankenstijn",
         "repo": "nix-config",
-        "rev": "61631fe42043e41a83ec98d2ff56dcc4e30abdad",
+        "rev": "4d0f719fd02518a90981a1f4f6b58a741b831952",
         "type": "github"
       },
       "original": {
