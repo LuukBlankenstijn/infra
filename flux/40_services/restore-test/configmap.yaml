@@ -95,7 +95,7 @@ data:
     pg_inventory "$pg_prod" > /tmp/pg-prod
 
     kubectl apply -f /config/postgres.yaml
-    if kubectl -n postgres wait cluster/restore-test --for=condition=Ready --timeout=30m; then
+    if kubectl -n postgres wait cluster/restore-test --for=condition=Ready --timeout=15m; then
       restored=$(psql_in restore-test-1 postgres "select at::text from restore_test.marker where id = 1" || true)
       [ "$restored" = "$marker" ] || report "Postgres restore does not contain the marker written before the test (got '$restored', want '$marker')"
       pg_inventory restore-test-1 > /tmp/pg-restored
@@ -103,7 +103,7 @@ data:
       [ -z "$missing" ] || report "Postgres restore is missing: $missing"
       echo "Postgres: $(wc -l < /tmp/pg-restored) databases and tables restored"
     else
-      report "Postgres restore did not become ready within 30 minutes"
+      report "Postgres restore did not become ready within 15 minutes"
       kubectl -n postgres get cluster restore-test -o jsonpath='{.status.phase}: {.status.phaseReason}' || true
     fi
     kubectl -n postgres delete cluster restore-test --wait=true --timeout=10m
@@ -111,13 +111,13 @@ data:
     echo "== MariaDB"
     mariadb_inventory mariadb-0 > /tmp/mariadb-prod
     kubectl apply -f /config/mariadb.yaml
-    if kubectl -n mariadb wait mariadb/restore-test --for=condition=Ready --timeout=30m; then
+    if kubectl -n mariadb wait mariadb/restore-test --for=condition=Ready --timeout=15m; then
       mariadb_inventory restore-test-0 > /tmp/mariadb-restored
       missing=$(comm -23 /tmp/mariadb-prod /tmp/mariadb-restored)
       [ -z "$missing" ] || report "MariaDB restore is missing: $missing"
       echo "MariaDB: $(wc -l < /tmp/mariadb-restored) databases and tables restored"
     else
-      report "MariaDB restore did not become ready within 30 minutes"
+      report "MariaDB restore did not become ready within 15 minutes"
     fi
 
     exit $fail
