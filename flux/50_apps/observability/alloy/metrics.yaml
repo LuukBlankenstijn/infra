@@ -27,12 +27,6 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "12345"
 
-    rbac:
-      rules:
-        - apiGroups: ["", "discovery.k8s.io"]
-          resources: ["endpoints", "endpointslices", "pods", "services"]
-          verbs: ["get", "list", "watch"]
-
     alloy:
       resources:
         requests:
@@ -52,6 +46,24 @@ spec:
             rule {
               source_labels = ["__meta_kubernetes_node_name"]
               target_label  = "node"
+            }
+          }
+
+          discovery.relabel "kubelet" {
+            targets = discovery.relabel.nodes.output
+
+            rule {
+              target_label = "metrics_path"
+              replacement  = "/metrics"
+            }
+          }
+
+          discovery.relabel "cadvisor" {
+            targets = discovery.relabel.nodes.output
+
+            rule {
+              target_label = "metrics_path"
+              replacement  = "/metrics/cadvisor"
             }
           }
 
@@ -166,7 +178,7 @@ spec:
 
           prometheus.scrape "kubelet" {
             job_name          = "kubelet"
-            targets           = discovery.relabel.nodes.output
+            targets           = discovery.relabel.kubelet.output
             scheme            = "https"
             metrics_path      = "/metrics"
             bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
@@ -180,8 +192,8 @@ spec:
           }
 
           prometheus.scrape "cadvisor" {
-            job_name          = "cadvisor"
-            targets           = discovery.relabel.nodes.output
+            job_name          = "kubelet"
+            targets           = discovery.relabel.cadvisor.output
             scheme            = "https"
             metrics_path      = "/metrics/cadvisor"
             bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
@@ -212,6 +224,103 @@ spec:
             targets         = discovery.relabel.annotated_pods.output
             scrape_interval = "60s"
             forward_to      = [prometheus.remote_write.mimir.receiver]
+          }
+
+          prometheus.operator.servicemonitors "all" {
+            forward_to = [prometheus.remote_write.mimir.receiver]
+          }
+
+          prometheus.operator.podmonitors "all" {
+            forward_to = [prometheus.remote_write.mimir.receiver]
+          }
+
+          prometheus.exporter.blackbox "public" {
+            config = "{ modules: { https: { prober: http, timeout: 10s, http: { preferred_ip_protocol: ip4, follow_redirects: false, fail_if_not_ssl: true, valid_status_codes: [200, 301, 302, 303, 307, 308, 401, 403] } } } }"
+
+            target {
+              name    = "authentik"
+              address = "https://auth.luukblankenstijn.nl/-/health/live/"
+              module  = "https"
+            }
+
+            target {
+              name    = "vaultwarden"
+              address = "https://vaultwarden.luukblankenstijn.nl/alive"
+              module  = "https"
+            }
+
+            target {
+              name    = "grafana"
+              address = "https://grafana.luukblankenstijn.nl/api/health"
+              module  = "https"
+            }
+
+            target {
+              name    = "grimmory"
+              address = "https://grimmory.luukblankenstijn.nl/"
+              module  = "https"
+            }
+
+            target {
+              name    = "shelfmark"
+              address = "https://shelfmark.luukblankenstijn.nl/"
+              module  = "https"
+            }
+
+            target {
+              name    = "netbird"
+              address = "https://netbird.luukblankenstijn.nl/"
+              module  = "https"
+            }
+
+            target {
+              name    = "openbao"
+              address = "https://openbao.luukblankenstijn.nl/v1/sys/health"
+              module  = "https"
+            }
+
+            target {
+              name    = "longhorn"
+              address = "https://longhorn.luukblankenstijn.nl/"
+              module  = "https"
+            }
+          }
+
+          discovery.relabel "blackbox" {
+            targets = prometheus.exporter.blackbox.public.targets
+
+            rule {
+              target_label = "job"
+              replacement  = "blackbox"
+            }
+          }
+
+          prometheus.scrape "blackbox" {
+            targets         = discovery.relabel.blackbox.output
+            scrape_interval = "60s"
+            forward_to      = [prometheus.remote_write.mimir.receiver]
+          }
+
+          mimir.rules.kubernetes "rules" {
+            address = "http://mimir.observability.svc.cluster.local:8080"
+
+            rule_selector {
+              match_expression {
+                key      = "rules.luukblankenstijn.nl/backend"
+                operator = "NotIn"
+                values   = ["loki"]
+              }
+            }
+          }
+
+          loki.rules.kubernetes "rules" {
+            address = "http://loki.observability.svc.cluster.local:3100"
+
+            rule_selector {
+              match_labels = {
+                "rules.luukblankenstijn.nl/backend" = "loki",
+              }
+            }
           }
 
           prometheus.remote_write "mimir" {
