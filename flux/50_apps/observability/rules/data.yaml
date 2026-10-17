@@ -17,7 +17,7 @@ spec:
           annotations:
             summary: "Postgres instance {{ $labels.pod }} is down"
         - alert: PostgresBackupStale
-          expr: time() - max(barman_cloud_cloudnative_pg_io_last_available_backup_timestamp) > 30 * 3600
+          expr: time() - max(barman_cloud_cloudnative_pg_io_last_available_backup_timestamp) > 30 * 3600 or absent(barman_cloud_cloudnative_pg_io_last_available_backup_timestamp)
           for: 30m
           labels:
             severity: warning
@@ -58,7 +58,7 @@ spec:
           annotations:
             summary: "MariaDB is down"
         - alert: MariaDBBackupStale
-          expr: time() - max(kube_job_status_completion_time{namespace="mariadb", job_name=~"mariadb-daily-.+"}) > 30 * 3600
+          expr: time() - max(kube_job_status_completion_time{namespace="mariadb", job_name=~"mariadb-daily-.+"}) > 30 * 3600 or absent(kube_job_status_completion_time{namespace="mariadb", job_name=~"mariadb-daily-.+"})
           for: 30m
           labels:
             severity: warning
@@ -66,12 +66,14 @@ spec:
             summary: "The last successful MariaDB backup finished {{ $value | humanizeDuration }} ago"
             description: "PhysicalBackup mariadb-daily runs at 03:00 and keeps 30 days in S3."
         - alert: MariaDBBackupFailed
-          expr: max by (job_name) (kube_job_status_failed{namespace="mariadb", job_name=~"mariadb-daily-.+"}) > 0
+          expr: |
+            max(kube_job_status_start_time{namespace="mariadb", job_name=~"mariadb-daily-.+"} and on (job_name) kube_job_status_failed{namespace="mariadb"} > 0)
+              > max(kube_job_status_completion_time{namespace="mariadb", job_name=~"mariadb-daily-.+"})
           for: 5m
           labels:
             severity: warning
           annotations:
-            summary: "MariaDB backup job {{ $labels.job_name }} failed"
+            summary: "The latest MariaDB backup job failed"
     - name: longhorn
       labels:
         group: data
@@ -98,7 +100,7 @@ spec:
           annotations:
             summary: "Longhorn backup {{ $labels.backup }} of {{ $labels.volume }} is in error"
         - alert: LonghornBackupStale
-          expr: time() - max(kube_cronjob_status_last_successful_time{namespace="longhorn-system", cronjob="daily-backup"}) > 30 * 3600
+          expr: time() - max(kube_cronjob_status_last_successful_time{namespace="longhorn-system", cronjob="daily-backup"}) > 30 * 3600 or absent(kube_cronjob_status_last_successful_time{namespace="longhorn-system", cronjob="daily-backup"})
           for: 30m
           labels:
             severity: warning

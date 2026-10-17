@@ -290,6 +290,48 @@ spec:
             forward_to      = [prometheus.remote_write.mimir.receiver]
           }
 
+          discovery.kubernetes "apiserver" {
+            role = "endpoints"
+
+            namespaces {
+              names = ["default"]
+            }
+          }
+
+          discovery.relabel "apiserver" {
+            targets = discovery.kubernetes.apiserver.targets
+
+            rule {
+              source_labels = ["__meta_kubernetes_service_name", "__meta_kubernetes_endpoint_port_name"]
+              regex         = "kubernetes;https"
+              action        = "keep"
+            }
+          }
+
+          prometheus.scrape "apiserver" {
+            job_name          = "apiserver"
+            targets           = discovery.relabel.apiserver.output
+            scheme            = "https"
+            bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+            scrape_interval   = "60s"
+
+            tls_config {
+              insecure_skip_verify = true
+            }
+
+            forward_to = [prometheus.relabel.apiserver.receiver]
+          }
+
+          prometheus.relabel "apiserver" {
+            forward_to = [prometheus.remote_write.mimir.receiver]
+
+            rule {
+              source_labels = ["__name__"]
+              regex         = "up|apiserver_request_total|apiserver_request_terminations_total|apiserver_client_certificate_expiration_seconds_.+|aggregator_unavailable_apiservice.*|apiserver_storage_objects|apiserver_storage_size_bytes|etcd_db_total_size_in_bytes"
+              action        = "keep"
+            }
+          }
+
           prometheus.operator.servicemonitors "all" {
             forward_to = [prometheus.remote_write.mimir.receiver]
           }
