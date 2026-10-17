@@ -357,6 +357,12 @@ spec:
               target_label = "job"
               replacement  = "blackbox"
             }
+
+            rule {
+              source_labels = ["__param_target"]
+              regex         = "https://([^/]+).*"
+              target_label  = "instance"
+            }
           }
 
           prometheus.scrape "blackbox" {

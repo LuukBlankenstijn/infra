@@ -4,5 +4,6 @@ metadata:
   name: enix
   namespace: observability
 spec:
+  type: oci
   interval: 24h
-  url: https://charts.enix.io
+  url: oci://quay.io/enix/charts
