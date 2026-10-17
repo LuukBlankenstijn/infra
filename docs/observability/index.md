@@ -103,7 +103,7 @@ application `grafana` are in `terraform/50_authentik-config/grafana.tf`; the
 client credentials reach Grafana from OpenBao `authentik/observability/grafana`
 through SecretStore `authentik` (role `authentik-observability`) as
 `GF_AUTH_GENERIC_OAUTH_CLIENT_ID`/`_SECRET`. Members of the Authentik group
-`authentik Admins` become Grafana server admins (`GrafanaAdmin`); everyone
+`infra-admins` become Grafana server admins (`GrafanaAdmin`); everyone
 else who can log in is a `Viewer`. The role is synced on every login.
 
 State is Postgres database `grafana` (`postgres/observability/grafana`,
@@ -243,7 +243,7 @@ kubectl -n traefik annotate externalsecret device-ca force-sync=$(date +%s) --ov
 `https://openbao.luukblankenstijn.nl/ui` shows an OIDC login that goes through
 Authentik (application `openbao`, `terraform/50_authentik-config/openbao.tf`;
 auth mount `oidc` from `40_openbao-config`). Only members of the Authentik
-group `authentik Admins` can log in. Their token carries policy `operator`:
+group `infra-admins` (owned by `50_authentik-config/admins.tf`) can log in. Their token carries policy `operator`:
 
 - read and list on mount `devices` (kv-v2, owned by `50_pki`), which holds
   `hosts/<host>` with the host's AppRole `role_id` and `secret_id`, and

@@ -1,7 +1,3 @@
-locals {
-  openbao_admin_group = "authentik Admins"
-}
-
 resource "random_password" "openbao_client_secret" {
   length  = 64
   special = false
@@ -39,13 +35,9 @@ resource "authentik_application" "openbao" {
   meta_launch_url   = "${var.bao_address}/ui/vault/auth?with=oidc%2F"
 }
 
-data "authentik_group" "admins" {
-  name = local.openbao_admin_group
-}
-
 resource "authentik_policy_binding" "openbao_admins" {
   target = authentik_application.openbao.uuid
-  group  = data.authentik_group.admins.id
+  group  = authentik_group.infra_admins.id
   order  = 0
 }
 
@@ -78,7 +70,7 @@ resource "vault_jwt_auth_backend_role" "authentik" {
   allowed_redirect_uris = [for uri in authentik_provider_oauth2.openbao.allowed_redirect_uris : uri.url]
 
   bound_claims = {
-    groups = local.openbao_admin_group
+    groups = authentik_group.infra_admins.name
   }
 
   token_policies = [vault_policy.operator.name]

@@ -126,5 +126,5 @@ spec:
         email_attribute_path: email
         login_attribute_path: preferred_username
         name_attribute_path: name
-        role_attribute_path: contains(groups, 'authentik Admins') && 'GrafanaAdmin' || 'Viewer'
+        role_attribute_path: contains(groups, 'infra-admins') && 'GrafanaAdmin' || 'Viewer'
         allow_assign_grafana_admin: true
