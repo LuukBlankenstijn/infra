@@ -32,7 +32,7 @@ jobs:
               - mkdocs.yml
               - .github/workflows/check.yml
 
-  flake:
+  eval:
     needs: changes
     if: needs.changes.outputs.nix == 'true'
     runs-on: ubuntu-latest
@@ -47,5 +47,35 @@ jobs:
       - name: flake evaluates, all hosts evaluate, docs build
         run: nix flake check --print-build-logs
 
-      - name: edge host closure builds
-        run: nix build --no-link --print-build-logs .#nixosConfigurations.edge.config.system.build.toplevel
+  host:
+    needs: changes
+    if: needs.changes.outputs.nix == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - host: edge
+            runner: ubuntu-latest
+          - host: home-server
+            runner: ubuntu-latest
+          - host: home-assistant
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: ${{ matrix.host }} closure builds
+        run: nix build --no-link --print-build-logs .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel
+
+  flake:
+    needs: [eval, host]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: every job passed or was skipped
+        run: ${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}

@@ -51,8 +51,8 @@ nixos-rebuild switch --flake .#<host> \
 For a NixOS release jump use `boot` and reboot: switching across releases on a
 running host can hang it.
 
-`check` evaluates every host (`nix flake check`) and builds the `edge` closure;
-`home-server` and `home-assistant` are only evaluated.
+`check` evaluates every host (`nix flake check`) and builds each host's closure,
+`home-assistant` on an arm64 runner.
 
 ## Secrets
 
