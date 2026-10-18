@@ -55,10 +55,11 @@ the volume, not in git. A long-lived access token for scripted changes through
 the API lives in OpenBao `secret/home-assistant/agent-token` (`token`); reach the
 API with `kubectl -n home-assistant port-forward svc/home-assistant 18123:80`.
 
-The phone's next alarm comes from the Companion app sensor
-`sensor.phone_next_alarm`, with the sensor's allow list set to the Clock app
-(`com.android.deskclock`). MIUI needs the app on "No restrictions" battery saver
-with autostart on, or alarm changes arrive late.
+The sunrise wake-up starts at `input_datetime.wake_up_time` minus
+`input_number.wake_up_light_duration` (template helper
+`sensor.sunrise_wake_up_start`). It does not follow the phone's alarm: the Xiaomi
+Clock app reports alarms one hour early to `sensor.phone_next_alarm`, and calendar
+reminders show up there too.
 
 ## Mosquitto
 
