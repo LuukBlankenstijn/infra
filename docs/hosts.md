@@ -74,7 +74,9 @@ on first boot. The same key moves along when the Pi switches to another disk.
 
 Wi-Fi: `nix/hosts/home-gateway/wifi.nix` lists the SSIDs; wpa_supplicant on
 `wlan0` reads each PSK from `wifi-psk-<lowercase ssid>` in
-`secrets/home-gateway.yaml`.
+`secrets/home-gateway.yaml`. Key management is WPA2-PSK only: with the NixOS
+default (SAE and FT included) the Pi 4's brcmfmac firmware times out
+authenticating to the home access points.
 
 ## Secrets
 

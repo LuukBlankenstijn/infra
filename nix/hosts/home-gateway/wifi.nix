@@ -22,6 +22,7 @@ in
     secretsFile = config.sops.templates."wireless.conf".path;
     extraConfig = "country=NL";
     networks = lib.genAttrs ssids (ssid: {
+      authProtocols = [ "WPA-PSK" ];
       pskRaw = "ext:${pskName ssid}";
     });
   };
