@@ -24,6 +24,11 @@ in
     networks = lib.genAttrs ssids (ssid: {
       authProtocols = [ "WPA-PSK" ];
       pskRaw = "ext:${pskName ssid}";
+      extraConfig = "disable_btm=1";
     });
   };
+
+  boot.extraModprobeConfig = ''
+    options brcmfmac roamoff=1
+  '';
 }
