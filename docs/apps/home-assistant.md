@@ -124,6 +124,13 @@ copies it and the token to `secret/pi-tunnel/frp`.
 | MQTT | `mqtts://mqtt.luukblankenstijn.nl:443` with the host's device certificate from `cfg.deviceCert` |
 | Frontend | `127.0.0.1:8080`, reached only through the tunnel |
 | Home Assistant discovery | on |
+| Devices | friendly names under `settings.devices`, e.g. `0x001788010dc3e925` → `roof-lamp` (`light.roof_lamp`) |
+
+The NixOS module copies the generated `configuration.yaml` over the one in
+`/var/lib/zigbee2mqtt` on every start, so a rename in the frontend lasts only
+until the next restart. Pair in the frontend, then declare the friendly name in
+`zigbee2mqtt.nix`; rename once with "Update Home Assistant entity ID" so the HA
+entity follows.
 
 zigbee2mqtt reads the certificate only when it starts. The path unit
 `zigbee2mqtt-device-cert` restarts it whenever OpenBao Agent writes a renewed

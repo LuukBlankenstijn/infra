@@ -22,6 +22,7 @@ in
         host = "127.0.0.1";
         port = 8080;
       };
+      devices."0x001788010dc3e925".friendly_name = "roof-lamp";
     };
   };
 
