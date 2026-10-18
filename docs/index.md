@@ -52,9 +52,10 @@ subdomain to Authentik.
 
 Every Minecraft chart version changes the `chart` label in the StatefulSet's
 `volumeClaimTemplates`, an immutable field, so Renovate does not automerge it.
-To upgrade: `flux -n minecraft suspend hr minecraft`,
-`kubectl -n minecraft delete sts minecraft --cascade=orphan`, merge the bump,
-then `flux -n minecraft resume hr minecraft`.
+To upgrade: `flux -n minecraft suspend hr minecraft`, merge the bump, wait until
+`flux -n minecraft get sources chart` shows the new version, then
+`kubectl -n minecraft delete sts minecraft --cascade=orphan` and
+`flux -n minecraft resume hr minecraft`.
 
 ## Working in the repo
 

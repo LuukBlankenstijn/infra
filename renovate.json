@@ -36,6 +36,15 @@
       "automerge": false
     },
     {
+      "matchPackageNames": [
+        "docker.io/library/mariadb"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": false
+    },
+    {
       "groupName": "frp",
       "matchPackageNames": [
         "fatedier/frpc",
