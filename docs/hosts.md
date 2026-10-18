@@ -76,8 +76,8 @@ Wi-Fi: `nix/hosts/home-gateway/wifi.nix` lists the SSIDs; wpa_supplicant on
 `wlan0` reads each PSK from `wifi-psk-<lowercase ssid>` in
 `secrets/home-gateway.yaml`. The Pi 4's brcmfmac firmware times out on SAE/FT
 authentication and wedges on the access points' band-steering (BSS transition)
-requests, so key management is WPA2-PSK only, each network sets
-`disable_btm=1`, and brcmfmac loads with `roamoff=1`.
+requests, so key management is WPA2-PSK only and brcmfmac loads with
+`roamoff=1`.
 
 ## Secrets
 
