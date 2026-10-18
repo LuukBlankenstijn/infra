@@ -40,7 +40,6 @@
           tag.gpgsign = false;
         };
       };
-      neovim.enable = true;
       shell.enable = true;
     };
   };
