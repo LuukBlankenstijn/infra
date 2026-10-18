@@ -4,6 +4,7 @@ keys:
   hosts:
     - &edge age1xntv2pw9n4ppt8nyshggefnytmyv3lh46lfvw43gnt9v8gs6vgyqq96wpk
     - &home-server age1xq5p2s3u9lpzr656pt2ra459swvqddkj7ht38gvjath9k5ysgeds36tnrk
+    - &home-gateway age1ye3gyvcwj0d4wt4epae3w0yxzygkgspfxqycf5lcv28w5fdcwatq42hsqz
 
 creation_rules:
   - path_regex: secrets/edge\.yaml$
@@ -16,11 +17,21 @@ creation_rules:
       - age:
           - *admin_luuk
           - *home-server
+  - path_regex: secrets/home-gateway\.yaml$
+    key_groups:
+      - age:
+          - *admin_luuk
+          - *home-gateway
   - path_regex: secrets/openbao/edge\.yaml$
     key_groups:
       - age:
           - *admin_luuk
           - *edge
+  - path_regex: secrets/openbao/home-gateway\.yaml$
+    key_groups:
+      - age:
+          - *admin_luuk
+          - *home-gateway
   - path_regex: secrets/openbao/[^/]+\.yaml$
     key_groups:
       - age:

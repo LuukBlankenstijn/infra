@@ -4,6 +4,7 @@
     ./hardware-configuration.nix
     ./frp.nix
     ./zigbee2mqtt.nix
+    ./wifi.nix
   ];
 
   cfg = {

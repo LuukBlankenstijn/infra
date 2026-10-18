@@ -164,7 +164,9 @@ same values.
   `home-server`'s disk. The cluster is rebuilt from git with
   `20_cluster-bootstrap` and Flux, then data is restored as above.
 - **The admin age key.** It is the only recipient of every `secrets/*.yaml`
-  except `edge.yaml`. Without it the state passphrase, the sealing key and the
+  except the host files (`edge.yaml`, `home-server.yaml`, `home-gateway.yaml`,
+  `openbao/{edge,home-gateway}.yaml`), which a host key can also open. Without
+  it the state passphrase, the sealing key and the
   external credentials are gone, and with the sealing key every SealedSecret.
 - **MariaDB point-in-time recovery.** See [MariaDB](#mariadb): only the nightly
   base backups exist.

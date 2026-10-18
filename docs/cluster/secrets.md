@@ -13,8 +13,9 @@ Nothing secret is committed in plain text.
 ## sops
 
 `.sops.yaml` encrypts every `secrets/*.yaml` to the admin age key;
-`secrets/edge.yaml` and `secrets/home-server.yaml` are also encrypted to that
-host's age key so sops-nix can decrypt them on the host (see
+`secrets/edge.yaml`, `secrets/home-server.yaml`, `secrets/home-gateway.yaml`
+and `secrets/openbao/{edge,home-gateway}.yaml` are also encrypted to that host's
+age key so sops-nix can decrypt them on the host (see
 [NixOS hosts](../hosts.md#secrets)).
 
 | File | Keys | Consumed by |
@@ -24,6 +25,8 @@ host's age key so sops-nix can decrypt them on the host (see
 | `sealed-secrets.yaml` | `tls_crt`, `tls_key` | `20_cluster-bootstrap` (the pinned sealing key) |
 | `edge.yaml` | `frp-token` | edge host (sops-nix); `40_openbao-config` → `secret/frpc/frpc` |
 | `home-server.yaml` | `password` | home-server (sops-nix), login password of `luuk` |
+| `home-gateway.yaml` | `frp-token`, `pi-tunnel-secret-key`, `wifi-psk-*` | home-gateway (sops-nix), frpc and Wi-Fi; `40_openbao-config` reads `pi-tunnel-secret-key` |
+| `openbao/edge.yaml`, `openbao/home-gateway.yaml` | `openbao/role_id`, `openbao/secret_id` | that host (sops-nix), `cfg.deviceCert` AppRole login |
 | `apps.yaml` | `authentik.secret_key`, `authentik.smtp_password`, `vaultwarden.smtp_password` | `40_openbao-config` |
 | `netbird.yaml` | `owner_email`, `owner_password`, `api_token`, `proxy_token` | `40_openbao-config` (`api_token`, `proxy_token`); `60_netbird-config` (`api_token`) |
 | `cloudflare.yaml` | `api_token`, `zone_id` | `10_edge` |

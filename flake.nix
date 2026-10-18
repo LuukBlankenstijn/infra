@@ -21,17 +21,29 @@
           inherit hostname system;
           modules = [ ./nix/hosts/${hostname}/configuration.nix ];
         };
-    in
-    {
       nixosConfigurations = {
         edge = host "edge" "x86_64-linux";
         home-server = host "home-server" "x86_64-linux";
         home-gateway = host "home-gateway" "aarch64-linux";
       };
+      sdImage =
+        hostname:
+        (nixosConfigurations.${hostname}.extendModules {
+          modules = [ "${nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix" ];
+        }).config.system.build.sdImage;
+    in
+    {
+      inherit nixosConfigurations;
 
-      packages = forAllSystems (system: {
-        docs = import ./nix/packages/docs.nix { pkgs = pkgsFor system; };
-      });
+      packages = forAllSystems (
+        system:
+        {
+          docs = import ./nix/packages/docs.nix { pkgs = pkgsFor system; };
+        }
+        // nixpkgs.lib.optionalAttrs (system == "aarch64-linux") {
+          home-gateway-sd-image = sdImage "home-gateway";
+        }
+      );
 
       checks = forAllSystems (system: {
         docs = import ./nix/packages/docs.nix { pkgs = pkgsFor system; };
