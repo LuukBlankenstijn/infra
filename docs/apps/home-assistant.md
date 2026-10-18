@@ -50,6 +50,16 @@ The MQTT integration is set up once in the UI: broker
 `home_assistant_password` from OpenBao `secret/home-assistant/mqtt`.
 zigbee2mqtt publishes Home Assistant discovery under `homeassistant/`.
 
+Automations, scripts, helpers and dashboards are managed in the UI and live on
+the volume, not in git. A long-lived access token for scripted changes through
+the API lives in OpenBao `secret/home-assistant/agent-token` (`token`); reach the
+API with `kubectl -n home-assistant port-forward svc/home-assistant 18123:80`.
+
+The phone's next alarm comes from the Companion app sensor
+`sensor.phone_next_alarm`, with the sensor's allow list set to the Clock app
+(`com.android.deskclock`). MIUI needs the app on "No restrictions" battery saver
+with autostart on, or alarm changes arrive late.
+
 ## Mosquitto
 
 `flux/50_apps/home-assistant/mosquitto.yaml`, `eclipse-mosquitto` with
