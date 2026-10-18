@@ -50,9 +50,11 @@ providers and outpost are configured in Authentik itself, not in OpenTofu. The
 IngressRoute `authentik/auth-redirect` sends `/outpost.goauthentik.io/` on every
 subdomain to Authentik.
 
-The Minecraft chart is pinned to `5.1.3`: `5.2.0` changes an immutable
-StatefulSet field, so upgrading needs
-`kubectl -n minecraft delete sts minecraft --cascade=orphan` first.
+Every Minecraft chart version changes the `chart` label in the StatefulSet's
+`volumeClaimTemplates`, an immutable field, so Renovate does not automerge it.
+To upgrade: `flux -n minecraft suspend hr minecraft`,
+`kubectl -n minecraft delete sts minecraft --cascade=orphan`, merge the bump,
+then `flux -n minecraft resume hr minecraft`.
 
 ## Working in the repo
 
