@@ -5,9 +5,9 @@ from raw manifests in `flux/50_apps/netbird` (namespace `netbird`):
 
 | Deployment | Image | Role |
 | --- | --- | --- |
-| `server` | `netbirdio/netbird-server:0.81.2` | management, signal and relay in one process, `strategy: Recreate` |
-| `dashboard` | `netbirdio/dashboard:v2.95.0` | web UI |
-| `reverse-proxy` | `netbirdio/reverse-proxy:0.81.2` | see [NetBird reverse proxy](reverse-proxy.md) |
+| `server` | `netbirdio/netbird-server` | management, signal and relay in one process, `strategy: Recreate` |
+| `dashboard` | `netbirdio/dashboard` | web UI |
+| `reverse-proxy` | `netbirdio/reverse-proxy` | see [NetBird reverse proxy](reverse-proxy.md) |
 
 The account configuration (groups, policies, DNS, users, the Authentik
 connector) is `terraform/60_netbird-config`.
@@ -124,7 +124,7 @@ tofu -chdir=terraform/60_netbird-config output -raw servers_setup_key
 
 ## Operator
 
-`flux/60_netbird-operator` installs netbird-operator `0.8.0` into `netbird`,
+`flux/60_netbird-operator` installs netbird-operator into `netbird`,
 cluster name `home`, management URL `https://netbird.luukblankenstijn.nl`, API
 key from the ExternalSecret `netbird-mgmt-api-key` (`secret/netbird/operator`).
 Its webhook has `failurePolicy: Ignore`, so pod admission does not depend on the

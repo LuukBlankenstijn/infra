@@ -3,7 +3,7 @@
 One `MariaDB`, `mariadb/mariadb` (`flux/40_services/mariadb`), managed by
 mariadb-operator (charts `mariadb-operator-crds` and `mariadb-operator`, namespace
 `mariadb-operator`, `controllers` layer): one replica, image
-`mariadb:12.3.3`, 5 Gi on `longhorn-single`. Applications share it, one user and
+`mariadb`, 5 Gi on `longhorn-single`. Applications share it, one user and
 database each. It stays on 12.x: Renovate skips MariaDB major versions, because
 mariadb-operator supports up to 12.3.
 

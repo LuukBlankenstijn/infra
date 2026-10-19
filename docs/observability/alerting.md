@@ -32,7 +32,7 @@ Loki's ruler sends to the same Alertmanager.
 
 | Source | File |
 | --- | --- |
-| Kubernetes, node and kube-state-metrics rules from kube-prometheus-stack `92.10.1`, installed rules-only | `flux/50_apps/observability/rules/kube-prometheus-stack.yaml` |
+| Kubernetes, node and kube-state-metrics rules from kube-prometheus-stack, installed rules-only | `flux/50_apps/observability/rules/kube-prometheus-stack.yaml` |
 | Flux, certificates, ingress, OpenBao, external-secrets, device certificates | `rules/platform.yaml` |
 | Postgres, MariaDB, Longhorn, their backups and the weekly restore test | `rules/data.yaml` |
 | edge and home-gateway reporting, disks, GPU, comin, the frp tunnel | `rules/infra.yaml` |

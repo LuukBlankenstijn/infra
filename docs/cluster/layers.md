@@ -41,7 +41,7 @@ with `prune: true`, `wait: true` and ordering only through `dependsOn`:
   once NetBird runs. Everything that needs the operator's CRDs (ClusterProxy,
   SetupKey, SidecarProfile) lives in `access`.
 - `access` reads `SetupKey` health from its `Ready` condition only: netbird-operator
-  0.8.0 never advances `status.observedGeneration` after the first reconcile, so the
+  never advances `status.observedGeneration` after the first reconcile, so the
   default health check would wait forever.
 - Layer directories have no `kustomization.yaml`; Flux generates one from every
   manifest below the path. A subdirectory that needs a generator
