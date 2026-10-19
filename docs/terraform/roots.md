@@ -49,9 +49,9 @@ CA chain per phone). See [Observability](../observability/index.md#device-ca).
 | --- | --- |
 | `10_edge` | Hetzner Cloud and Cloudflare APIs |
 | `20_cluster-bootstrap` | the [LAN kubeconfig](../cluster/access.md#the-lan-kubeconfig) |
-| `40_openbao-config`, `40_s3-buckets` | OpenBao at `https://openbao.luukblankenstijn.nl`, the LAN kubeconfig for the login token |
+| `40_openbao-config`, `40_s3-buckets` | OpenBao at `https://openbao.luukblankenstijn.nl`, cluster access through the default kubectl context for the login token |
 | `40_databases` | OpenBao; the LAN kubeconfig, to read `postgres/postgres-app` and `mariadb/mariadb-provisioner`; `192.168.1.78:5432` and `:3306` |
-| `50_pki` | OpenBao, the LAN kubeconfig for the login token |
+| `50_pki` | OpenBao, cluster access through the default kubectl context for the login token |
 | `50_authentik-config` | OpenBao; Authentik at `https://auth.luukblankenstijn.nl` with the API token from `authentik/authentik-auth` key `AUTHENTIK_BOOTSTRAP_TOKEN`, read through the LAN kubeconfig |
 | `60_netbird-config` | OpenBao (`authentik/netbird/netbird`); NetBird at `https://netbird.luukblankenstijn.nl` |
 

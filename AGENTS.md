@@ -64,7 +64,8 @@ A new group needs a route and receiver in
 
 ## Working
 
-- `direnv allow` loads the dev shell, `KUBECONFIG=.kube/config`, `BAO_ADDR` and
+- `direnv allow` loads the dev shell, `KUBECONFIG=.kube/netbird.yaml:.kube/config`
+  (NetBird ClusterProxy context `home-netbird` by default, LAN context `home`), `BAO_ADDR` and
   sops-backed variables. Each tofu root's `.envrc` adds its own.
 - Flux syncs `main`. After a push:
   `kubectl -n flux-system annotate gitrepository flux-system reconcile.fluxcd.io/requestedAt="$(date +%s)" --overwrite`.

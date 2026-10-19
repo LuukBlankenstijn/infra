@@ -1,6 +1,6 @@
 # OpenBao
 
-OpenBao 2.7.1 (`flux/30_openbao`, chart `0.30.4`): one Raft replica on a 1 Gi
+OpenBao (`flux/30_openbao`, chart `openbao`): one Raft replica on a 1 Gi
 `longhorn` volume, sealed with a static key, reached at
 `https://openbao.luukblankenstijn.nl` through Traefik and in-cluster at
 `http://openbao-active.openbao.svc:8200`. The listener has no TLS of its own;
@@ -37,7 +37,7 @@ bao write auth/kubernetes/login role=admin \
 
 `BAO_ADDR` is set by the root `.envrc`. For OpenTofu, `bao_jwt_export` (root
 `.envrc`) mints the same token into `TF_VAR_bao_jwt` with a 5-second request
-timeout; without a working [LAN kubeconfig](access.md#the-lan-kubeconfig) the
+timeout through the default kubectl context (see [Cluster access](access.md)); without API access the
 variable stays unset. Every root with a `vault` provider calls it and logs in
 through `auth/kubernetes/login` as `admin`.
 

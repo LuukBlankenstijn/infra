@@ -11,7 +11,8 @@ crash.*.log
 .direnv/
 .envrc.local
 
-.kube/
+.kube/*
+!.kube/netbird.yaml
 
 result
 result-*

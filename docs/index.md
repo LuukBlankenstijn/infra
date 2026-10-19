@@ -59,7 +59,7 @@ To upgrade: `flux -n minecraft suspend hr minecraft`, merge the bump, wait until
 
 ## Working in the repo
 
-`direnv allow` loads the dev shell, `KUBECONFIG=.kube/config`,
+`direnv allow` loads the dev shell, `KUBECONFIG=.kube/netbird.yaml:.kube/config`,
 `BAO_ADDR=https://openbao.luukblankenstijn.nl`, and the state passphrase and S3
 credentials from sops. Each OpenTofu root's `.envrc` adds only the secrets that
 root needs.
