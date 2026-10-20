@@ -29,7 +29,7 @@ uid 1300 / gid 1301 (the image's `androidusr`), the server as uid and gid 1000.
 | Container | Image | Does |
 | --- | --- | --- |
 | `emulator` | `budtmo/docker-android:emulator_14.0_v3.8.0-p1` | Android 14 emulator (Google APIs, x86_64 with ARM translation) and the adb server; usage analytics off via `USER_BEHAVIOR_ANALYTICS=false` |
-| `server` | `ghcr.io/luukblankenstijn/android-emul-server` | web UI and WebSocket `/ws` on 8080, talks to the adb server on `127.0.0.1:5037`, so it shares the pod; read-only root filesystem |
+| `server` | `ghcr.io/luukblankenstijn/android-emul-server` | web UI and WebSocket `/ws` on 8080. Reads the emulator's framebuffer and sends input through the emulator's gRPC API on `127.0.0.1:8554` (`-grpc 8554`), and uses the adb server on `127.0.0.1:5037` for apps, so it shares the pod. Encodes with ffmpeg, so apps that mark windows secure (Spotify) still show. Read-only root filesystem |
 
 The server reads the user from `X-authentik-username` and the groups from
 `X-authentik-groups`, which `proxy-auth` passes on; `ADMIN_GROUP=infra-admins`

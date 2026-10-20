@@ -27,7 +27,7 @@ spec:
             - name: EMULATOR_HEADLESS
               value: "true"
             - name: EMULATOR_ADDITIONAL_ARGS
-              value: -no-window -no-audio
+              value: -no-window -no-audio -grpc 8554
             - name: USER_BEHAVIOR_ANALYTICS
               value: "false"
           command: ["bash", "-c"]
@@ -73,7 +73,7 @@ spec:
             - name: data
               mountPath: /home/androidusr/emulator
         - name: server
-          image: ghcr.io/luukblankenstijn/android-emul-server:0.1.2
+          image: ghcr.io/luukblankenstijn/android-emul-server:0.2.0
           ports:
             - containerPort: 8080
               name: http
@@ -82,7 +82,8 @@ spec:
               value: infra-admins
           resources:
             requests:
-              memory: 128Mi
+              cpu: 500m
+              memory: 192Mi
             limits:
               memory: 512Mi
           securityContext:
