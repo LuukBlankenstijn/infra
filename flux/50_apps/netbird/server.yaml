@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: server
-          image: netbirdio/netbird-server:0.81.2
+          image: netbirdio/netbird-server:0.81.3
           args:
             - "--config=/etc/netbird/config.yaml"
           ports:
