@@ -71,7 +71,6 @@ nav:
       - NetBird reverse proxy: cluster/reverse-proxy.md
   - NixOS hosts: hosts.md
   - Apps:
-      - Android emulator: apps/android-emul.md
       - Home Assistant: apps/home-assistant.md
   - Databases:
       - Postgres: databases/postgres.md

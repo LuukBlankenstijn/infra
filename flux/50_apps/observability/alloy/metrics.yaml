@@ -392,12 +392,6 @@ spec:
             }
 
             target {
-              name    = "android-emul"
-              address = "https://android.luukblankenstijn.nl/"
-              module  = "https"
-            }
-
-            target {
               name    = "mqtt"
               address = "mqtt.luukblankenstijn.nl:443"
               module  = "mqtts"

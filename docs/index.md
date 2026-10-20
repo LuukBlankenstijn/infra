@@ -32,7 +32,6 @@ Everything in `flux/50_apps`. Hostnames are under `luukblankenstijn.nl`.
 
 | App | Host | State |
 | --- | --- | --- |
-| Android emulator | `android`, behind Authentik forward auth; control for `infra-admins`. See [Android emulator](apps/android-emul.md) | Longhorn volume `data` |
 | Authentik | `auth` | Postgres `authentik` |
 | Grafana | `grafana`; device ingest on `logs` and `metrics`, mTLS only | Postgres `grafana`; Loki and Mimir in buckets `luuk-loki`, `luuk-mimir` |
 | Grimmory | `grimmory` | MariaDB `grimmory`, Longhorn volumes `data`, `books` |

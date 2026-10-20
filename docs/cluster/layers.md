@@ -23,7 +23,7 @@ with `prune: true`, `wait: true` and ordering only through `dependsOn`:
 | Layer | Holds |
 | --- | --- |
 | `10_sealed-secrets` | the sealed-secrets controller (`keyrenewperiod: 0`, see [Secrets](secrets.md#sealedsecrets)) |
-| `20_controllers` | cert-manager, CloudNativePG and the Barman Cloud plugin, external-secrets, Longhorn, mariadb-operator, the NVIDIA device plugin, the [KVM device plugin](../apps/android-emul.md#kvm-device-plugin), the CSI snapshot controller, Traefik |
+| `20_controllers` | cert-manager, CloudNativePG and the Barman Cloud plugin, external-secrets, Longhorn, mariadb-operator, the NVIDIA device plugin, the CSI snapshot controller, Traefik |
 | `30_config` | ClusterIssuer `letsencrypt-dns` and the wildcard certificate, the CoreDNS database-name rewrites, Longhorn backup target, recurring jobs and `longhorn-single`, the `infra-admin` ServiceAccount |
 | `30_openbao` | [OpenBao](openbao.md) |
 | `40_services` | [Postgres](../databases/postgres.md), [MariaDB](../databases/mariadb.md), the [frpc tunnel](edge.md#the-tunnel), the [Pi tunnel](../apps/home-assistant.md#the-pi-tunnel), the [node exporter](../observability/index.md) |

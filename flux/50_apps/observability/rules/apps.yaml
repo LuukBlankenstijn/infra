@@ -28,21 +28,3 @@ spec:
             severity: critical
           annotations:
             summary: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has no available replica"
-    - name: android-emul
-      labels:
-        group: apps
-      rules:
-        - alert: AndroidEmulWorkloadDown
-          expr: max by (namespace, deployment) (kube_deployment_status_replicas_available{namespace="android-emul"}) < 1
-          for: 15m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has no available replica"
-            description: "The emulator is not booted or the web server is unhealthy. A first boot takes up to 5 minutes; check the startup probe and the squat.ai/kvm resource on the node."
-        - alert: AndroidEmulContainerRestarting
-          expr: sum by (namespace, pod, container) (increase(kube_pod_container_status_restarts_total{namespace="android-emul"}[1h])) > 2
-          labels:
-            severity: warning
-          annotations:
-            summary: "Container {{ $labels.container }} in {{ $labels.namespace }}/{{ $labels.pod }} restarted {{ $value | humanize }} times in the last hour"

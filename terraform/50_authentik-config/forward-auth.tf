@@ -21,13 +21,6 @@ locals {
       open_in_new_tab = false
       public          = false
     }
-    "android-emul" = {
-      name            = "Android emulator"
-      host            = "android.luukblankenstijn.nl"
-      group           = ""
-      open_in_new_tab = true
-      public          = true
-    }
   }
 }
 
