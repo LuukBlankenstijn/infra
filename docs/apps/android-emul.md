@@ -1,8 +1,9 @@
 # Android emulator
 
 One Android Emulator runs in the cluster with KVM acceleration; its screen is
-streamed to a web page at `android.luukblankenstijn.nl`. Every Authentik user
-who passes forward auth can watch it; members of `infra-admins` can control it.
+streamed to a web page at `android.luukblankenstijn.nl`. Members of the
+Authentik groups `infra-admins` and `public` can watch it; members of
+`infra-admins` can control it.
 The images are built in `LuukBlankenstijn/android-emul`.
 
 ```mermaid
@@ -70,15 +71,11 @@ kubelet through `/var/lib/kubelet/device-plugins` and announces one device
 
 ## Authentik
 
-Forward auth needs a proxy provider for this host, created in the Authentik
-UI like the other forward-auth apps (not in OpenTofu):
-
-1. Applications → Providers → Create → Proxy Provider, mode *Forward auth
-   (single application)*, external host `https://android.luukblankenstijn.nl`.
-2. Applications → Create an application `android-emul` with that provider.
-3. Outposts → the embedded outpost → add the application.
-
-Without it, `proxy-auth` rejects every request to the host.
+Forward auth comes from the `android-emul` entry in `local.forward_auth_apps`
+(`terraform/50_authentik-config/forward-auth.tf`), with `public = true`: the
+application is bound to `infra-admins` and `public`, and `infra-admins` decides
+control inside the app. Without the provider in the embedded outpost, `proxy-auth`
+answers every request to the host with Authentik's 404.
 
 ## Alerts
 

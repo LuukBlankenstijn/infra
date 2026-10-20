@@ -59,6 +59,11 @@ resource "authentik_application" "netbird" {
   meta_launch_url   = "https://${local.netbird_host}"
 }
 
+resource "authentik_policy_binding" "netbird_admins" {
+  target = authentik_application.netbird.uuid
+  group  = authentik_group.infra_admins.id
+  order  = 0
+}
 
 resource "vault_mount" "authentik" {
   path        = "authentik"

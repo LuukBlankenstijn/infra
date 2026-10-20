@@ -46,10 +46,14 @@ Everything in `flux/50_apps`. Hostnames are under `luukblankenstijn.nl`.
 | Traefik dashboard | `traefik`, behind Authentik forward auth | - |
 | Vaultwarden | `vaultwarden` | Postgres `vaultwarden`, volume `data` |
 
-Forward auth is the Traefik Middleware `authentik/proxy-auth`; the matching
-providers and outpost are configured in Authentik itself, not in OpenTofu. The
-IngressRoute `authentik/auth-redirect` sends `/outpost.goauthentik.io/` on every
-subdomain to Authentik.
+Forward auth is the Traefik Middleware `authentik/proxy-auth`. The proxy
+providers, their applications and access bindings, and the embedded outpost are
+OpenTofu in `terraform/50_authentik-config/forward-auth.tf`; a new forward-auth
+app is one entry in `local.forward_auth_apps`. Every app is bound to group
+`infra-admins`; `public = true` also binds group `public`, whose members are
+managed in the Authentik UI. Shelfmark is additionally open to group
+`Booklore`. The IngressRoute `authentik/auth-redirect` sends
+`/outpost.goauthentik.io/` on every subdomain to Authentik.
 
 Every Minecraft chart version changes the `chart` label in the StatefulSet's
 `volumeClaimTemplates`, an immutable field, so Renovate does not automerge it.

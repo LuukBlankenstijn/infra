@@ -42,6 +42,12 @@ resource "authentik_application" "grafana" {
   meta_launch_url   = "https://${local.grafana_host}"
 }
 
+resource "authentik_policy_binding" "grafana_admins" {
+  target = authentik_application.grafana.uuid
+  group  = authentik_group.infra_admins.id
+  order  = 0
+}
+
 resource "vault_kv_secret_v2" "grafana" {
   mount = vault_mount.authentik.path
   name  = "observability/grafana"

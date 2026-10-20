@@ -59,7 +59,8 @@ Two ways to log in:
   redirect URIs `/oauth2/callback` and `/oauth2/logout/callback`) is created by
   `50_authentik-config`, which writes `client_id`, `client_secret` and `issuer`
   to OpenBao `authentik/netbird/netbird`; `60_netbird-config` reads them from
-  there.
+  there. A policy binding limits the Authentik application to group
+  `infra-admins`; nobody else sees it or can log in.
 - **Local owner**, break-glass, credentials in `secrets/netbird.yaml`
   (`owner_email`, `owner_password`). Local auth stays
   enabled for it (`localAuthDisabled: false`).

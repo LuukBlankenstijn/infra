@@ -111,12 +111,13 @@ ServiceMonitor, PodMonitor and PrometheusRule components; `alloy-logs` replaces
 `https://grafana.luukblankenstijn.nl`, IngressRoute `observability/grafana`.
 
 Login is Authentik only (`disable_login_form`). The OAuth2 provider and
-application `grafana` are in `terraform/50_authentik-config/grafana.tf`; the
-client credentials reach Grafana from OpenBao `authentik/observability/grafana`
-through SecretStore `authentik` (role `authentik-observability`) as
-`GF_AUTH_GENERIC_OAUTH_CLIENT_ID`/`_SECRET`. Members of the Authentik group
-`infra-admins` become Grafana server admins (`GrafanaAdmin`); everyone
-else who can log in is a `Viewer`. The role is synced on every login.
+application `grafana` are in `terraform/50_authentik-config/grafana.tf`; a
+policy binding limits the application to the Authentik group `infra-admins`,
+so nobody else sees it in Authentik or can log in. The client credentials reach
+Grafana from OpenBao `authentik/observability/grafana` through SecretStore
+`authentik` (role `authentik-observability`) as
+`GF_AUTH_GENERIC_OAUTH_CLIENT_ID`/`_SECRET`. Members of `infra-admins` become
+Grafana server admins (`GrafanaAdmin`); the role is synced on every login.
 
 State is Postgres database `grafana` (`postgres/observability/grafana`,
 SecretStore `postgres`), connected with `sslmode=verify-full` against the system
