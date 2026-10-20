@@ -46,6 +46,14 @@ spec:
             severity: warning
           annotations:
             summary: "The GPU is at {{ $value }}°C"
+        - alert: KvmDeviceUnavailable
+          expr: max(kube_node_status_allocatable{node="home-server", resource="squat_ai_kvm"}) < 1 or absent(kube_node_status_allocatable{node="home-server", resource="squat_ai_kvm"})
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "home-server offers no squat.ai/kvm device"
+            description: "generic-device-plugin in namespace generic-device-plugin is not running or does not find /dev/kvm; the Android emulator cannot be scheduled."
     - name: deployments
       labels:
         group: platform

@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: android-emul
+  namespace: android-emul
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: { app: android-emul }
+  template:
+    metadata:
+      labels: { app: android-emul }
+    spec:
+      securityContext:
+        fsGroup: 1301
+        runAsNonRoot: true
+      containers:
+        - name: emulator
+          image: budtmo/docker-android:emulator_14.0_v3.8.0-p1
+          env:
+            - name: EMULATOR_DEVICE
+              value: Samsung Galaxy S10
+            - name: EMULATOR_NAME
+              value: device
+            - name: EMULATOR_HEADLESS
+              value: "true"
+            - name: EMULATOR_ADDITIONAL_ARGS
+              value: -no-window -no-audio
+            - name: USER_BEHAVIOR_ANALYTICS
+              value: "false"
+          command: ["bash", "-c"]
+          args:
+            - |
+              sed -i 's/self.change_permission()/pass/' ~/docker-android/cli/src/device/emulator.py
+              mkdir -p ~/.android/avd
+              printf 'avd.ini.encoding=UTF-8\npath=%s\ntarget=android-34\n' ~/emulator > ~/.android/avd/device.ini
+              rm -f ~/emulator/*.lock
+              exec ~/docker-android/mixins/scripts/run.sh
+          resources:
+            requests:
+              cpu: "2"
+              memory: 5Gi
+              squat.ai/kvm: 1
+            limits:
+              memory: 7Gi
+              squat.ai/kvm: 1
+          securityContext:
+            runAsUser: 1300
+            runAsGroup: 1301
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          startupProbe:
+            exec:
+              command: ["sh", "-c", "adb shell getprop sys.boot_completed | grep -q 1"]
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "adb shell getprop sys.boot_completed | grep -q 1"]
+            periodSeconds: 30
+            timeoutSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["adb", "get-state"]
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          volumeMounts:
+            - name: data
+              mountPath: /home/androidusr/emulator
+        - name: server
+          image: ghcr.io/luukblankenstijn/android-emul-server:0.1.0
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: ADMIN_GROUP
+              value: infra-admins
+          resources:
+            requests:
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data

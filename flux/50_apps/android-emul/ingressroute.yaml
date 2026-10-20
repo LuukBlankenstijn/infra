@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: android-emul
+  namespace: android-emul
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`android.luukblankenstijn.nl`) && PathPrefix(`/`)
+      middlewares:
+        - name: proxy-auth
+          namespace: authentik
+      kind: Rule
+      services:
+        - name: android-emul
+          port: 8080
