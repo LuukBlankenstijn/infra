@@ -46,3 +46,8 @@ with `prune: true`, `wait: true` and ordering only through `dependsOn`:
 - Layer directories have no `kustomization.yaml`; Flux generates one from every
   manifest below the path. A subdirectory that needs a generator
   (`20_controllers/snapshot-controller`) carries its own.
+- HTTP HelmRepositories refresh their index every hour (`interval: 1h`).
+  Renovate merges a chart bump as soon as the chart is published; until Flux
+  refetches the index, the HelmRelease cannot find that version, fails, and
+  holds up its layer and every layer after it. OCI repositories have no index
+  and keep `24h`.

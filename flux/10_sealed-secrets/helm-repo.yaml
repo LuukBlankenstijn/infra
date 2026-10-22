@@ -4,5 +4,5 @@ metadata:
   name: sealed-secrets-charts
   namespace: sealed-secrets
 spec:
-  interval: 24h
+  interval: 1h
   url: https://bitnami.github.io/sealed-secrets

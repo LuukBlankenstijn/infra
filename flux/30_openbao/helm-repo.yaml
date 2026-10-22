@@ -4,5 +4,5 @@ metadata:
   name: openbao-charts
   namespace: openbao
 spec:
-  interval: 24h
+  interval: 1h
   url: https://openbao.github.io/openbao-helm

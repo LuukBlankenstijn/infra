@@ -4,5 +4,5 @@ metadata:
   name: cloudnative-pg
   namespace: cnpg
 spec:
-  interval: 24h
+  interval: 1h
   url: https://cloudnative-pg.github.io/charts
