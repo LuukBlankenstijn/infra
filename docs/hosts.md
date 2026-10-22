@@ -79,13 +79,10 @@ authentication and wedges on the access points' band-steering (BSS transition)
 requests, so key management is WPA2-PSK only and brcmfmac loads with
 `roamoff=1`.
 
-Only CasaGooch4 is listed. The printer's access point shares `wlan0`'s channel
-(see [3D printer](apps/printer.md#access-point-on-home-gateway)), so the Pi must
-not wander between networks. CasaGooch4 has a 5 GHz (channel 104) and a 2.4 GHz
-BSS on one access point and held the Pi without a disconnect for days;
-CasaGooch5, a separate 2.4 GHz access point that changes channel, dropped it
-within a day. CasaGooch4's 5 GHz band also keeps the Pi's radio off 2.4 GHz,
-next to the Zigbee dongle (channel 11).
+Only CasaGooch4 is listed: the printer's access point shares `wlan0`'s channel
+(see [3D printer](apps/printer.md#access-point-on-home-gateway)), so the Pi stays
+on one network. CasaGooch4 has a 5 GHz BSS (channel 104, DFS) and a 2.4 GHz BSS
+(channel 1, which overlaps Zigbee channel 11) on the same access point.
 
 ## Secrets
 
