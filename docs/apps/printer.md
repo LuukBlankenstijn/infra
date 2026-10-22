@@ -52,7 +52,7 @@ With DFS, hostapd logs `Wait for CAC to complete` and never `AP-ENABLED`; the
 firmware handles radar detection itself and the access point serves clients
 anyway. dhcpcd ignores `uap0`.
 
-Firewall (iptables): `uap0` accepts only DHCP (UDP 67) to the Pi. `networking.nat`
+Firewall (iptables): on `uap0` the Pi additionally opens DHCP (UDP 67); SSH and ping are open on every interface. `networking.nat`
 masquerades the printer's traffic out of `wlan0`, so it reaches the internet
 (firmware updates, time); chain `printer-forward` drops anything it starts towards
 `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` and `100.64.0.0/10`, so not the
