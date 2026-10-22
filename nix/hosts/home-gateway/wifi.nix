@@ -1,9 +1,6 @@
 { config, lib, ... }:
 let
-  ssids = [
-    "CasaGooch5"
-    "CasaGooch4"
-  ];
+  ssids = [ "CasaGooch4" ];
   pskName = ssid: "wifi-psk-${lib.toLower ssid}";
 in
 {

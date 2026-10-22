@@ -13,3 +13,7 @@ resource "netbird_group" "kubernetes_api" {
 resource "netbird_group" "ollama" {
   name = "ollama"
 }
+
+resource "netbird_group" "printer" {
+  name = "printer"
+}

@@ -35,7 +35,7 @@ Loki's ruler sends to the same Alertmanager.
 | Kubernetes, node and kube-state-metrics rules from kube-prometheus-stack, installed rules-only | `flux/50_apps/observability/rules/kube-prometheus-stack.yaml` |
 | Flux, certificates, ingress, OpenBao, external-secrets, device certificates | `rules/platform.yaml` |
 | Postgres, MariaDB, Longhorn, their backups and the weekly restore test | `rules/data.yaml` |
-| edge and home-gateway reporting, disks, GPU, comin, the frp tunnel | `rules/infra.yaml` |
+| edge and home-gateway reporting, the printer's access point on home-gateway, disks, GPU, comin, the frp tunnel | `rules/infra.yaml` |
 | public endpoints probed from inside the cluster; Home Assistant and mosquitto workloads | `rules/apps.yaml` |
 | Alertmanager, rulers, ingestion, ntfy, Alloy | `rules/meta.yaml` |
 | login failures and SSH logins, from logs | `rules/security.yaml` (Loki) |
@@ -198,4 +198,5 @@ Beyond the jobs in [In-cluster collection](index.md#in-cluster-collection):
 | Longhorn | chart ServiceMonitor |
 | OpenBao, external-secrets, Authentik, mariadb-operator, CNPG operator, CoreDNS | ServiceMonitors / PodMonitors |
 | comin, disk SMART, GPU on `home-server` | NixOS exporters on the node (`nix/hosts/home-server`), scraped by `alloy-metrics` on ports 4243, 9633 and 9835 |
+| The printer's access point | `node_network_up{host="home-gateway", device="uap0"}` from the Pi's Alloy; `PrinterAccessPointDown` |
 | comin and frps on `edge`, comin on `home-gateway`; `up{job="node-exporter"}` per host, which `EdgeNotReporting` and `HomeGatewayNotReporting` watch | the host's Alloy (`cfg.services.alloy.scrapeTargets`) |

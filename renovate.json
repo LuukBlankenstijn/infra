@@ -13,6 +13,18 @@
       "/^flux/.+\\.yaml$/"
     ]
   },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^flux/.+\\.yaml$/"
+      ],
+      "matchStrings": [
+        "https://github\\.com/(?<depName>[^/\\s]+/[^/\\s]+)/archive/refs/tags/(?<currentValue>[^/\\s]+)\\.tar\\.gz"
+      ],
+      "datasourceTemplate": "github-releases"
+    }
+  ],
   "platformAutomerge": true,
   "packageRules": [
     {

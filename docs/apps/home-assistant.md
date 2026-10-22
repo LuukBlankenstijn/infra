@@ -39,6 +39,9 @@ the UI-managed `automations.yaml`, `scenes.yaml` and `scripts.yaml`, which it cr
 empty when missing. Everything else (integrations, users, history) lives in
 `.storage` on the volume.
 
+The only custom integration, `elegoo_printer`, is installed by the second
+initContainer at a pinned release; see [3D printer](printer.md#home-assistant).
+
 The `http` integration is configured in the UI (Settings → System → Network),
 since YAML for it is deprecated: use `X-Forwarded-For` and trust the pod CIDR
 `10.42.0.0/16` (Traefik), otherwise Home Assistant rejects proxied requests with
@@ -112,14 +115,21 @@ port is opened on the edge and nothing listens publicly.
   coturn cannot give with a single IP); when that does not succeed within one
   second it falls back to the `stcp` visitor `<target>-relay`, which relays
   through frps. `keepTunnelOpen` keeps the direct tunnel up between requests.
-  A Service per target points at the visitor port.
+  A Service points at the visitor ports.
 
-| Target | Pi port | Service |
-| --- | --- | --- |
-| `zigbee2mqtt` | `127.0.0.1:8080` | `pi-tunnel/zigbee2mqtt:8080` |
+| Target | Pi address | Visitor port | Service |
+| --- | --- | --- | --- |
+| `zigbee2mqtt` | `127.0.0.1:8080` | 8080 | `pi-tunnel/zigbee2mqtt:8080` |
+| `printer-mqtt` | `10.77.0.10:1883` | 1883 | `pi-tunnel/printer:1883` |
+| `printer-upload` | `10.77.0.10:80` | 10080 | `pi-tunnel/printer:80` |
+| `printer-camera` | `10.77.0.10:8080` | 18080 | `pi-tunnel/printer:8080` |
+
+The printer targets reach the [3D printer](printer.md) on the Pi's access point.
 
 A new target is one entry in `targets` in `frp.nix`, two visitors in
-`flux/40_services/pi-tunnel/deployment.yaml`, a container port and a Service.
+`flux/40_services/pi-tunnel/deployment.yaml`, a container port and a Service
+port. frpc reads `frpc.toml` only at start, so after Flux applies a changed
+ConfigMap: `kubectl -n pi-tunnel rollout restart deploy frpc`.
 
 Both frpc clients use the shared frp token. The secret key is
 `pi-tunnel-secret-key` in `secrets/home-gateway.yaml`; `40_openbao-config`

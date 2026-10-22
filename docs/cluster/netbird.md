@@ -97,16 +97,29 @@ id, deletes the built-in `Default` policy, so only the policies below exist.
 | `servers` | headless hosts enrolled with setup key `servers-bootstrap` |
 | `kubernetes-api` | the [ClusterProxy](access.md#netbird-clusterproxy) peer |
 | `ollama` | the Ollama sidecar peer |
+| `printer` | network resource `printer-lan` |
 
 | Policy | Direction |
 | --- | --- |
-| `admins-to-servers`, `admins-to-kubernetes-api`, `admins-to-ollama` | `admins` → group only |
+| `admins-to-servers`, `admins-to-kubernetes-api`, `admins-to-ollama`, `admins-to-printer` | `admins` → group only |
 | `admins-to-admins` | both ways between admin devices |
 
 The DNS zone `luuk.internal` (search domain enabled) is distributed to `admins`.
 
 OpenTofu owns every group, `admins` included, and its membership. JWT group sync
 is off: NetBird never adds JWT members to a group it did not create itself.
+
+### Networks
+
+`networks.tf` declares the network `home-gateway`, for subnets behind the Pi:
+
+| Resource | Address | Group |
+| --- | --- | --- |
+| `printer-lan` | `10.77.0.0/24`, the [3D printer](../apps/printer.md)'s access point | `printer` |
+
+Its routing peer is not in OpenTofu: in the dashboard, Networks → `home-gateway`
+→ add routing peer `home-gateway` with masquerade on. The Pi's NetBird client
+forwards to `uap0`; the Pi's firewall lets replies back.
 
 ### Users
 

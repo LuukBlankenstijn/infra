@@ -3,6 +3,7 @@ locals {
     servers        = netbird_group.servers.id
     kubernetes-api = netbird_group.kubernetes_api.id
     ollama         = netbird_group.ollama.id
+    printer        = netbird_group.printer.id
   }
 }
 

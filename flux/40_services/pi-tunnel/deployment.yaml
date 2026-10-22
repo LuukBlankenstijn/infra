@@ -32,6 +32,60 @@ data:
     keepTunnelOpen = true
     fallbackTo = "zigbee2mqtt-relay"
     fallbackTimeoutMs = 1000
+
+    [[visitors]]
+    name = "printer-mqtt-relay"
+    type = "stcp"
+    serverName = "printer-mqtt"
+    secretKey = "{{ .Envs.PI_TUNNEL_SECRET_KEY }}"
+    bindPort = -1
+
+    [[visitors]]
+    name = "printer-mqtt"
+    type = "xtcp"
+    serverName = "printer-mqtt-p2p"
+    secretKey = "{{ .Envs.PI_TUNNEL_SECRET_KEY }}"
+    bindAddr = "0.0.0.0"
+    bindPort = 1883
+    keepTunnelOpen = true
+    fallbackTo = "printer-mqtt-relay"
+    fallbackTimeoutMs = 1000
+
+    [[visitors]]
+    name = "printer-upload-relay"
+    type = "stcp"
+    serverName = "printer-upload"
+    secretKey = "{{ .Envs.PI_TUNNEL_SECRET_KEY }}"
+    bindPort = -1
+
+    [[visitors]]
+    name = "printer-upload"
+    type = "xtcp"
+    serverName = "printer-upload-p2p"
+    secretKey = "{{ .Envs.PI_TUNNEL_SECRET_KEY }}"
+    bindAddr = "0.0.0.0"
+    bindPort = 10080
+    keepTunnelOpen = true
+    fallbackTo = "printer-upload-relay"
+    fallbackTimeoutMs = 1000
+
+    [[visitors]]
+    name = "printer-camera-relay"
+    type = "stcp"
+    serverName = "printer-camera"
+    secretKey = "{{ .Envs.PI_TUNNEL_SECRET_KEY }}"
+    bindPort = -1
+
+    [[visitors]]
+    name = "printer-camera"
+    type = "xtcp"
+    serverName = "printer-camera-p2p"
+    secretKey = "{{ .Envs.PI_TUNNEL_SECRET_KEY }}"
+    bindAddr = "0.0.0.0"
+    bindPort = 18080
+    keepTunnelOpen = true
+    fallbackTo = "printer-camera-relay"
+    fallbackTimeoutMs = 1000
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -67,6 +121,12 @@ spec:
           ports:
             - name: zigbee2mqtt
               containerPort: 8080
+            - name: printer-mqtt
+              containerPort: 1883
+            - name: printer-upload
+              containerPort: 10080
+            - name: printer-camera
+              containerPort: 18080
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -100,6 +160,25 @@ spec:
     - name: http
       port: 8080
       targetPort: zigbee2mqtt
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: printer
+  namespace: pi-tunnel
+spec:
+  selector:
+    app: frpc
+  ports:
+    - name: mqtt
+      port: 1883
+      targetPort: printer-mqtt
+    - name: upload
+      port: 80
+      targetPort: printer-upload
+    - name: camera
+      port: 8080
+      targetPort: printer-camera
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute

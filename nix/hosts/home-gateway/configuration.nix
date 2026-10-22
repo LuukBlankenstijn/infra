@@ -3,6 +3,7 @@
   imports = [
     ./hardware-configuration.nix
     ./frp.nix
+    ./printer.nix
     ./zigbee2mqtt.nix
     ./wifi.nix
   ];

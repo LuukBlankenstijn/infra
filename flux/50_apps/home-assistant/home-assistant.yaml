@@ -46,6 +46,27 @@ spec:
             - name: seed
               mountPath: /seed
               readOnly: true
+        - name: elegoo-printer
+          image: ghcr.io/home-assistant/home-assistant:2026.10.2
+          env:
+            - name: ELEGOO_PRINTER_URL
+              value: https://github.com/danielcherubini/elegoo-homeassistant/archive/refs/tags/v2.15.0.tar.gz
+          command:
+            - sh
+            - -ec
+            - |
+              target=/config/custom_components/elegoo_printer
+              if [ "$(cat "$target/.source" 2>/dev/null)" != "$ELEGOO_PRINTER_URL" ]; then
+                rm -rf /tmp/elegoo
+                mkdir -p /tmp/elegoo /config/custom_components
+                curl -fsSL "$ELEGOO_PRINTER_URL" | tar -xz -C /tmp/elegoo --strip-components=1
+                rm -rf "$target"
+                mv /tmp/elegoo/custom_components/elegoo_printer "$target"
+                echo "$ELEGOO_PRINTER_URL" > "$target/.source"
+              fi
+          volumeMounts:
+            - name: config
+              mountPath: /config
       containers:
         - name: home-assistant
           image: ghcr.io/home-assistant/home-assistant:2026.10.2

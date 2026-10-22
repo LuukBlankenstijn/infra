@@ -8,7 +8,7 @@ which also defines the laptops.
 | --- | --- | --- | --- |
 | `edge` | `x86_64-linux` | `49.12.197.36` | public ingress, see [Edge](cluster/edge.md) |
 | `home-server` | `x86_64-linux` | `192.168.1.78` | the k3s node |
-| `home-gateway` | `aarch64-linux` | home Wi-Fi (DHCP), Raspberry Pi 4 booting from an SD card | zigbee2mqtt and the [Pi tunnel](apps/home-assistant.md#the-pi-tunnel) |
+| `home-gateway` | `aarch64-linux` | home Wi-Fi (DHCP), Raspberry Pi 4 booting from an SD card | zigbee2mqtt, the [Pi tunnel](apps/home-assistant.md#the-pi-tunnel) and the access point of the [3D printer](apps/printer.md) |
 
 ## How a host is built
 
@@ -79,6 +79,14 @@ authentication and wedges on the access points' band-steering (BSS transition)
 requests, so key management is WPA2-PSK only and brcmfmac loads with
 `roamoff=1`.
 
+Only CasaGooch4 is listed. The printer's access point shares `wlan0`'s channel
+(see [3D printer](apps/printer.md#access-point-on-home-gateway)), so the Pi must
+not wander between networks. CasaGooch4 has a 5 GHz (channel 104) and a 2.4 GHz
+BSS on one access point and held the Pi without a disconnect for days;
+CasaGooch5, a separate 2.4 GHz access point that changes channel, dropped it
+within a day. CasaGooch4's 5 GHz band also keeps the Pi's radio off 2.4 GHz,
+next to the Zigbee dongle (channel 11).
+
 ## Secrets
 
 sops-nix decrypts `secrets/<host>.yaml` with the age key derived from the host's
@@ -89,7 +97,7 @@ key and the host's key; see [Secrets](cluster/secrets.md#sops).
 | --- | --- | --- |
 | `edge.yaml` | `frp-token` | frps |
 | `home-server.yaml` | `password` | hashed login password for `luuk` |
-| `home-gateway.yaml` | `frp-token`, `pi-tunnel-secret-key`, `wifi-psk-casagooch5`, `wifi-psk-casagooch4` | frpc of the [Pi tunnel](apps/home-assistant.md#the-pi-tunnel), `40_openbao-config` also reads the secret key; Wi-Fi passphrases |
+| `home-gateway.yaml` | `frp-token`, `pi-tunnel-secret-key`, `wifi-psk-casagooch4`, `printer-wifi-psk` | frpc of the [Pi tunnel](apps/home-assistant.md#the-pi-tunnel), `40_openbao-config` also reads the secret key; the Wi-Fi passphrase; the passphrase of the printer's access point |
 | `openbao/edge.yaml`, `openbao/home-gateway.yaml` | `openbao/role_id`, `openbao/secret_id` | AppRole `device-<host>` for nix-config's `cfg.deviceCert` |
 
 A reinstalled host has a new SSH host key, so its recipient in `.sops.yaml`

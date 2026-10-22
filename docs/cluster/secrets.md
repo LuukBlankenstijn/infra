@@ -25,7 +25,7 @@ age key so sops-nix can decrypt them on the host (see
 | `sealed-secrets.yaml` | `tls_crt`, `tls_key` | `20_cluster-bootstrap` (the pinned sealing key) |
 | `edge.yaml` | `frp-token` | edge host (sops-nix); `40_openbao-config` → `secret/frpc/frpc` |
 | `home-server.yaml` | `password` | home-server (sops-nix), login password of `luuk` |
-| `home-gateway.yaml` | `frp-token`, `pi-tunnel-secret-key`, `wifi-psk-*` | home-gateway (sops-nix), frpc and Wi-Fi; `40_openbao-config` reads `pi-tunnel-secret-key` |
+| `home-gateway.yaml` | `frp-token`, `pi-tunnel-secret-key`, `wifi-psk-*`, `printer-wifi-psk` | home-gateway (sops-nix), frpc, Wi-Fi and the printer's access point; `40_openbao-config` reads `pi-tunnel-secret-key` |
 | `openbao/edge.yaml`, `openbao/home-gateway.yaml` | `openbao/role_id`, `openbao/secret_id` | that host (sops-nix), `cfg.deviceCert` AppRole login |
 | `apps.yaml` | `authentik.secret_key`, `authentik.smtp_password`, `vaultwarden.smtp_password` | `40_openbao-config` |
 | `netbird.yaml` | `owner_email`, `owner_password`, `api_token`, `proxy_token` | `40_openbao-config` (`api_token`, `proxy_token`); `60_netbird-config` (`api_token`) |
