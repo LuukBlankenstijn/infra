@@ -374,6 +374,12 @@ spec:
             }
 
             target {
+              name    = "pingvin-share"
+              address = "https://share.luukblankenstijn.nl/api/health"
+              module  = "https"
+            }
+
+            target {
               name    = "netbird"
               address = "https://netbird.luukblankenstijn.nl/"
               module  = "https"

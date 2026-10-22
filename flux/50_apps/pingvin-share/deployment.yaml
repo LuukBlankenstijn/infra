@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pingvin-share
+  namespace: pingvin-share
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: { app: pingvin-share }
+  template:
+    metadata:
+      labels: { app: pingvin-share }
+    spec:
+      containers:
+        - name: pingvin-share
+          image: smp46/pingvin-share-x:v2.0.0
+          ports:
+            - containerPort: 3000
+          env:
+            - name: TRUST_PROXY
+              value: "true"
+            - name: TZ
+              value: Europe/Amsterdam
+          volumeMounts:
+            - name: data
+              mountPath: /opt/app/backend/data
+            - name: config
+              mountPath: /opt/app/config.yaml
+              subPath: config.yaml
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data
+        - name: config
+          secret:
+            secretName: pingvin-share-config

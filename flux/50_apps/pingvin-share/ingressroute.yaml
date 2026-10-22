@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: pingvin-share
+  namespace: pingvin-share
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`share.luukblankenstijn.nl`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: pingvin-share
+          namespace: pingvin-share
+          port: 3000

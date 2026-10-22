@@ -41,6 +41,7 @@ Everything in `flux/50_apps`. Hostnames are under `luukblankenstijn.nl`.
 | ntfy | `ntfy`, mTLS only | Longhorn volume `data` (SQLite) |
 | NetBird | `netbird` | Postgres `netbird`, `netbird_events`, `netbird_idp`, Longhorn volume `netbird-data` |
 | Ollama | no ingress; NetBird sidecar only | Longhorn volume for models |
+| Pingvin Share | `share`, Authentik OIDC. See [Pingvin Share](apps/pingvin-share.md) | Longhorn volume `data` (SQLite and files) |
 | Shelfmark | `shelfmark`, behind Authentik forward auth | Longhorn volumes `books`, `config`, `downloads` |
 | Traefik dashboard | `traefik`, behind Authentik forward auth | - |
 | Vaultwarden | `vaultwarden` | Postgres `vaultwarden`, volume `data` |

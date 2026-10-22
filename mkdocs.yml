@@ -72,6 +72,7 @@ nav:
   - NixOS hosts: hosts.md
   - Apps:
       - Home Assistant: apps/home-assistant.md
+      - Pingvin Share: apps/pingvin-share.md
   - Databases:
       - Postgres: databases/postgres.md
       - MariaDB: databases/mariadb.md

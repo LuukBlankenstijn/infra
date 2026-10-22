@@ -75,8 +75,9 @@ in that namespace, carries the policies for that namespace's paths, and issues
 
 `authentik` follows the same pattern: `50_authentik-config` creates policy
 `authentik-observability-grafana` and role `authentik-observability` for
-Grafana's client. `authentik/netbird/netbird` has no Kubernetes role; only
-`60_netbird-config` reads it, as `admin`.
+Grafana's client, and policy `authentik-pingvin-share-pingvin-share` and role
+`authentik-pingvin-share` for Pingvin Share's. `authentik/netbird/netbird` has
+no Kubernetes role; only `60_netbird-config` reads it, as `admin`.
 
 `secret/observability/device-ca` is read from namespace `traefik` through role
 `pki-traefik` (policy `pki-traefik-device-ca`), owned by `50_pki`. It is not
