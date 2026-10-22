@@ -6,7 +6,7 @@ a laptop running the slicer reaches it over NetBird.
 
 ```mermaid
 flowchart LR
-  printer[Printer 10.77.0.10] -->|Wi-Fi home-gateway-printer| ap
+  printer[Printer 10.77.0.10] -->|Wi-Fi gateway| ap
   subgraph pi[home-gateway]
     ap[uap0 10.77.0.1, hostapd + dnsmasq]
     frpc[frpc: printer-mqtt, printer-upload, printer-camera]
@@ -44,7 +44,7 @@ there. The printer has to join on whatever band that is.
 
 | Unit | Does |
 | --- | --- |
-| `printer-ap.service` | reads `wlan0`'s channel, adds `uap0` (MAC derived from `wlan0`'s), sets `10.77.0.1/24`, writes `/run/printer-ap/hostapd.conf` with the passphrase from `printer-wifi-psk` and runs hostapd; WPA2-PSK, SSID `home-gateway-printer`. `PartOf` `wpa_supplicant-wlan0.service`, so it restarts with it; it retries every 10 s until `wlan0` is associated |
+| `printer-ap.service` | reads `wlan0`'s channel, adds `uap0` (MAC derived from `wlan0`'s), sets `10.77.0.1/24`, writes `/run/printer-ap/hostapd.conf` with the passphrase from `printer-wifi-psk` and runs hostapd; WPA2-PSK, SSID `gateway`. `PartOf` `wpa_supplicant-wlan0.service`, so it restarts with it; it retries every 10 s until `wlan0` is associated |
 | `printer-ap-watch.timer` | every minute: pings the default gateway through `wlan0`; after three failures in a row it restarts `wpa_supplicant-wlan0` (and so `printer-ap`). With a working uplink it restarts `printer-ap` when it is not active or `uap0`'s channel differs from `wlan0`'s, which happens when the router changes channel |
 | `dnsmasq.service` | DHCP on `uap0` only, no DNS. The pool is the single address `10.77.0.10`, so the printer always gets it and a second client gets no lease. Router `10.77.0.1`, DNS `1.1.1.1`, `9.9.9.9` |
 
