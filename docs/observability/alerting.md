@@ -36,7 +36,7 @@ Loki's ruler sends to the same Alertmanager.
 | Flux, certificates, ingress, OpenBao, external-secrets, device certificates | `rules/platform.yaml` |
 | Postgres, MariaDB, Longhorn, their backups and the weekly restore test | `rules/data.yaml` |
 | edge and home-gateway reporting, the printer's access point on home-gateway, disks, GPU, comin, the frp tunnel | `rules/infra.yaml` |
-| public endpoints probed from inside the cluster; Home Assistant and mosquitto workloads | `rules/apps.yaml` |
+| public endpoints probed from inside the cluster; Home Assistant, mosquitto and Ollama workloads | `rules/apps.yaml` |
 | Alertmanager, rulers, ingestion, ntfy, Alloy | `rules/meta.yaml` |
 | login failures and SSH logins, from logs | `rules/security.yaml` (Loki) |
 

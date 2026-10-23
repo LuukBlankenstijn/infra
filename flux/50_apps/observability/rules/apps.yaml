@@ -28,3 +28,11 @@ spec:
             severity: critical
           annotations:
             summary: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has no available replica"
+        - alert: OllamaDown
+          expr: max(kube_deployment_status_replicas_available{namespace="ollama"}) < 1 or absent(kube_deployment_status_replicas_available{namespace="ollama"})
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Ollama has no available replica"
+            description: "Home Assistant's printer failure check (ai_task.ollama_ai_task) cannot judge camera frames, so a failed print is not paused."

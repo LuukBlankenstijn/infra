@@ -99,6 +99,35 @@ Discovery is skipped through a proxy host; the integration learns the serial
 number from the printer's MQTT status or asks for it (label on the printer,
 Settings → Network).
 
+Entities are named `*.room_3d_printer_*`; the camera is
+`camera.room_3d_printer_chamber_camera`. The dashboard `dashboard-home` has a
+view `printer` (camera, print status and controls, temperatures and fans, failure
+detection), edited through the UI or the websocket API like the rest of the
+dashboard.
+
+## Failure detection
+
+Home Assistant's AI Task sends a camera frame to Ollama (`flux/50_apps/ollama`,
+on the GPU node; `qwen3.5:4b-q4_K_M`, the model already loaded there). Set up once in the UI:
+Add integration → Ollama, URL `http://ollama-ollama.ollama.svc:11434`, no API
+key; in the AI Task entry, model `qwen3.5:4b-q4_K_M`, context window 4096 (the
+size Ollama keeps the model loaded with, so the request does not force a
+reload), thinking off, keep alive -1. That gives `ai_task.ollama_ai_task`.
+
+Like all automations and helpers, these live on the volume, not in git:
+
+| Automation | Does |
+| --- | --- |
+| `printer_ai_check` | every 3 minutes, while `input_boolean.printer_ai_check` is on, `sensor.room_3d_printer_print_status` is `printing` and the layer is above 10: asks `ai_task.generate_data` for a `reason` and a `defect` (`none`, `spaghetti`, `detached`, `empty_bed`, `layer_shift`, `blob`) with the camera frame attached, and stores both in `input_text.printer_ai_defect` and `input_text.printer_ai_reason`. Anything but `none` increments `counter.printer_ai_strikes`, `none` resets it. At 3 strikes it presses `button.room_3d_printer_pause_print` and sends a normal-priority notification to `notify.mobile_app_phone` with the live camera image and Resume and Stop actions |
+| `printer_ai_notification_action` | presses resume or stop when a notification action is tapped |
+| `printer_ai_reset` | resets the strikes and the stored verdict when a print starts or ends |
+
+The verdict comes from `defect` alone. While printing, `empty_bed` means the part
+came off, so it counts as a failure. The model answers in about 2–5 s. On a bare
+bed it gives `empty_bed` or `none`, with an occasional stray failure label, which
+is why it takes 3 strikes in a row and starts above layer 10, when the part is
+visible from the camera's angle.
+
 ## Slicer
 
 The laptop reaches `10.77.0.0/24` over NetBird: `60_netbird-config` declares the
@@ -116,5 +145,6 @@ code; uploads, the device page and the camera go straight to the printer.
 | --- | --- |
 | `PrinterAccessPointDown` | `node_network_up{device="uap0"}` on `home-gateway` is 0 or missing for 15 minutes while the Pi reports metrics |
 | `HomeAssistantWorkloadDown` | the frpc Deployment in `pi-tunnel` has no available replica |
+| `OllamaDown` | Ollama has no available replica for 15 minutes, so the failure check cannot run |
 
 The printer itself is often off, so its reachability is not alerted on.
