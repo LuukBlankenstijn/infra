@@ -48,7 +48,7 @@ the access point therefore runs only while `wlan0` is connected.
 | --- | --- |
 | `printer-ap-guard.service` | the only thing that starts or stops `printer-ap`. Every 10 s: if `wlan0` is not connected it stops `printer-ap` at once and restarts `wpa_supplicant-wlan0`, which stops scanning after the scans the access point made fail. If `wlan0` is connected and its default gateway answers, it starts `printer-ap`, or restarts it when `uap0`'s frequency differs from `wlan0`'s (router changed channel or band). Counts checks without a working uplink: after 2 minutes it restarts `wpa_supplicant-wlan0`, after 4 minutes it reloads `brcmfmac`, after 6 minutes it reboots, but only when the Pi has been up for 30 minutes |
 | `printer-ap.service` | started by the guard only: requires `wlan0` to be connected and takes its frequency from `iw dev wlan0 link`, adds `uap0` (MAC derived from `wlan0`'s), sets `10.77.0.1/24`, writes `/run/printer-ap/hostapd.conf` with the passphrase from `printer-wifi-psk` and runs hostapd; WPA2-PSK, SSID `gateway` |
-| `dnsmasq.service` | DHCP on `uap0` only, no DNS. The pool is the single address `10.77.0.10`, so the printer always gets it and a second client gets no lease. Router `10.77.0.1`, DNS `1.1.1.1`, `9.9.9.9` |
+| `dnsmasq.service` | DHCP on `uap0` only, no DNS. `10.77.0.10` is reserved for the printer's MAC (`printerMac` in `printer-network.nix`, `88:49:2d:75:42:2d`); any other client gets `10.77.0.100`–`10.77.0.110`. Router `10.77.0.1`, DNS `1.1.1.1`, `9.9.9.9` |
 
 With DFS, hostapd logs `Wait for CAC to complete` and never `AP-ENABLED`; the
 firmware handles radar detection itself and the access point serves clients

@@ -169,7 +169,8 @@ in
       interface = "uap0";
       bind-dynamic = true;
       dhcp-authoritative = true;
-      dhcp-range = "${net.printer},${net.printer},12h";
+      dhcp-range = "${net.guestFirst},${net.guestLast},12h";
+      dhcp-host = "${net.printerMac},${net.printer}";
       dhcp-option = [
         "option:router,${net.gateway}"
         "option:dns-server,1.1.1.1,9.9.9.9"
