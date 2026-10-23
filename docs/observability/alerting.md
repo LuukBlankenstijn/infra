@@ -77,7 +77,7 @@ that is expected.
 
 | Severity | ntfy priority | Repeats while firing | Night 23:00–08:00 (Europe/Amsterdam) |
 | --- | --- | --- | --- |
-| `critical` | 5 | every 2 h | delivered |
+| `critical` | 4 | every 2 h | delivered |
 | `warning`, `error` | 4 | every 12 h | held until 08:00 |
 | `info` | 2 | every 7 days | delivered |
 
@@ -172,6 +172,11 @@ the notification is fixed per topic.
    user `luuk`, the password from `secret/ntfy/ntfy`.
 3. Subscribe to `alerts-infra`, `alerts-platform`, `alerts-data`, `alerts-apps`,
    `alerts-security` and `alerts-meta` on that server.
+4. In the ntfy app, Settings → "Keep alerting for highest priority" off.
+
+The Alertmanager sends nothing above priority 4, so the phone's Do Not Disturb
+silences all `alerts-*` notifications; critical alerts differ from warnings by
+the red marker in the title.
 
 The app keeps a WebSocket open to the server; no Google or ntfy.sh service is
 involved.

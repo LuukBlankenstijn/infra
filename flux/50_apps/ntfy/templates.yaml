@@ -25,4 +25,4 @@ data:
       {{ end }}
     priority: |
       {{- $severity := .commonLabels.severity | default "info" -}}
-      {{- if eq .status "resolved" }}2{{ else if eq $severity "critical" }}5{{ else if eq $severity "warning" }}4{{ else }}2{{ end }}
+      {{- if eq .status "resolved" }}2{{ else if or (eq $severity "critical") (eq $severity "warning") (eq $severity "error") }}4{{ else }}2{{ end }}
