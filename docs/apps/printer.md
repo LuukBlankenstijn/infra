@@ -99,6 +99,10 @@ Discovery is skipped through a proxy host; the integration learns the serial
 number from the printer's MQTT status or asks for it (label on the printer,
 Settings → Network).
 
+`light.room_3d_printer_chamber_light` is hidden, so the Lights panel and area
+targets such as `presence_away_lights_off` (`area_id: bedroom`) leave it alone;
+the camera needs it while printing. The Printer view controls it directly.
+
 Entities are named `*.room_3d_printer_*`; the camera is
 `camera.room_3d_printer_chamber_camera`. The dashboard `dashboard-home` has a
 view `printer` (camera, print status and controls, temperatures and fans, failure
