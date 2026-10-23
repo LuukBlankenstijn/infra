@@ -40,12 +40,14 @@ Home Assistant uses one MQTT slot, the slicer two (1883 and 9001).
 The Pi 4's radio runs one client and one access point only on a single channel,
 so the access point `uap0` always takes `wlan0`'s channel and band; with
 CasaGooch4 that is 5 GHz channel 104 (DFS), or its 2.4 GHz band if `wlan0` lands
-there. The printer has to join on whatever band that is.
+there. The printer has to join on whatever band that is. While `uap0` exists the
+radio cannot scan, so `wlan0` cannot find the router again after a disconnect;
+the access point therefore runs only while `wlan0` is connected.
 
 | Unit | Does |
 | --- | --- |
-| `printer-ap.service` | reads `wlan0`'s channel, adds `uap0` (MAC derived from `wlan0`'s), sets `10.77.0.1/24`, writes `/run/printer-ap/hostapd.conf` with the passphrase from `printer-wifi-psk` and runs hostapd; WPA2-PSK, SSID `gateway`. `PartOf` `wpa_supplicant-wlan0.service`, so it restarts with it; it retries every 10 s until `wlan0` is associated |
-| `printer-ap-watch.timer` | every minute: pings the default gateway through `wlan0`; after three failures in a row it restarts `wpa_supplicant-wlan0` (and so `printer-ap`). With a working uplink it restarts `printer-ap` when it is not active or `uap0`'s channel differs from `wlan0`'s, which happens when the router changes channel |
+| `printer-ap-guard.service` | the only thing that starts or stops `printer-ap`. Every 10 s: if `wlan0` is not connected it stops `printer-ap` at once and restarts `wpa_supplicant-wlan0`, which stops scanning after the scans the access point made fail. If `wlan0` is connected and its default gateway answers, it starts `printer-ap`, or restarts it when `uap0`'s frequency differs from `wlan0`'s (router changed channel or band). Counts checks without a working uplink: after 2 minutes it restarts `wpa_supplicant-wlan0`, after 4 minutes it reloads `brcmfmac`, after 6 minutes it reboots, but only when the Pi has been up for 30 minutes |
+| `printer-ap.service` | started by the guard only: requires `wlan0` to be connected and takes its frequency from `iw dev wlan0 link`, adds `uap0` (MAC derived from `wlan0`'s), sets `10.77.0.1/24`, writes `/run/printer-ap/hostapd.conf` with the passphrase from `printer-wifi-psk` and runs hostapd; WPA2-PSK, SSID `gateway` |
 | `dnsmasq.service` | DHCP on `uap0` only, no DNS. The pool is the single address `10.77.0.10`, so the printer always gets it and a second client gets no lease. Router `10.77.0.1`, DNS `1.1.1.1`, `9.9.9.9` |
 
 With DFS, hostapd logs `Wait for CAC to complete` and never `AP-ENABLED`; the

@@ -21,15 +21,17 @@ let
       pkgs.gawk
     ];
     text = ''
-      channel=$(iw dev wlan0 info | awk '$1 == "channel" { print $2 }')
-      freq=$(iw dev wlan0 info | awk '$1 == "channel" { print substr($3, 2) }')
-      if [ -z "$channel" ] || [ -z "$freq" ]; then
-        echo "wlan0 is not associated; uap0 has no channel to share" >&2
+      freq=$(iw dev wlan0 link | awk '/^Connected/ { connected = 1 } connected && $1 == "freq:" { print int($2) }')
+      if [ -z "$freq" ]; then
+        echo "wlan0 is not connected; uap0 has no channel to share" >&2
         exit 1
       fi
-      mode=a
       if [ "$freq" -lt 3000 ]; then
         mode=g
+        channel=$(( freq == 2484 ? 14 : (freq - 2407) / 5 ))
+      else
+        mode=a
+        channel=$(( (freq - 5000) / 5 ))
       fi
 
       mac=$(cat /sys/class/net/wlan0/address)
@@ -62,37 +64,73 @@ let
     '';
   };
 
-  watch = pkgs.writeShellApplication {
-    name = "printer-ap-watch";
+  guard = pkgs.writeShellApplication {
+    name = "printer-ap-guard";
     runtimeInputs = [
       pkgs.iw
       pkgs.iproute2
       pkgs.iputils
       pkgs.gawk
+      pkgs.kmod
       config.systemd.package
     ];
     text = ''
-      failures_file=/run/printer-ap-watch/uplink-failures
-      gateway=$(ip -4 route show default dev wlan0 | awk '{ print $3; exit }')
-      if [ -z "$gateway" ] || ! ping -I wlan0 -c 3 -W 3 "$gateway" >/dev/null; then
-        failures=$(( $(cat "$failures_file" 2>/dev/null || echo 0) + 1 ))
-        echo "$failures" > "$failures_file"
-        echo "uplink check failed, $failures in a row"
-        if [ "$failures" -ge 3 ]; then
-          echo "restarting wpa_supplicant-wlan0 and with it printer-ap"
-          systemctl restart wpa_supplicant-wlan0.service
-          echo 0 > "$failures_file"
-        fi
-        exit 0
-      fi
-      echo 0 > "$failures_file"
+      uplink_freq() {
+        { iw dev wlan0 link 2>/dev/null || true; } | awk '/^Connected/ { connected = 1 } connected && $1 == "freq:" { print int($2) }'
+      }
 
-      uplink_channel=$(iw dev wlan0 info | awk '$1 == "channel" { print $2 }')
-      ap_channel=$(iw dev uap0 info 2>/dev/null | awk '$1 == "channel" { print $2 }')
-      if ! systemctl is-active --quiet printer-ap.service || [ "$ap_channel" != "$uplink_channel" ]; then
-        echo "restarting printer-ap: uap0 on channel '$ap_channel', wlan0 on channel '$uplink_channel'"
-        systemctl restart printer-ap.service
-      fi
+      stop_ap() {
+        if systemctl is-active --quiet printer-ap.service; then
+          echo "stopping printer-ap so wlan0 can scan, restarting wpa_supplicant-wlan0"
+          systemctl stop printer-ap.service || true
+          systemctl restart wpa_supplicant-wlan0.service || true
+        fi
+      }
+
+      failures=0
+      while true; do
+        freq=$(uplink_freq)
+        if [ -z "$freq" ]; then
+          stop_ap
+          failures=$(( failures + 1 ))
+        else
+          gateway=$({ ip -4 route show default dev wlan0 2>/dev/null || true; } | awk '{ print $3; exit }')
+          if [ -n "$gateway" ] && ping -I wlan0 -c 2 -W 2 "$gateway" >/dev/null; then
+            failures=0
+            ap_freq=$({ iw dev uap0 info 2>/dev/null || true; } | awk '$1 == "channel" { print substr($3, 2) }')
+            if ! systemctl is-active --quiet printer-ap.service || [ "$ap_freq" != "$freq" ]; then
+              echo "starting printer-ap on $freq MHz (uap0 was on '$ap_freq')"
+              systemctl restart printer-ap.service || true
+            fi
+          else
+            failures=$(( failures + 1 ))
+          fi
+        fi
+
+        case "$failures" in
+          0) ;;
+          12)
+            echo "uplink down for 2 minutes: restarting wpa_supplicant-wlan0"
+            stop_ap
+            systemctl restart wpa_supplicant-wlan0.service || true
+            ;;
+          24)
+            echo "uplink down for 4 minutes: reloading brcmfmac"
+            stop_ap
+            modprobe -r -a brcmfmac_wcc brcmfmac || true
+            modprobe brcmfmac || true
+            sleep 5
+            systemctl restart wpa_supplicant-wlan0.service || true
+            ;;
+          *)
+            if [ "$failures" -ge 36 ] && [ "$(awk '{ print int($1) }' /proc/uptime)" -ge 1800 ]; then
+              echo "uplink down for 6 minutes: rebooting"
+              systemctl reboot
+            fi
+            ;;
+        esac
+        sleep 10
+      done
     '';
   };
 in
@@ -100,11 +138,7 @@ in
   sops.secrets.printer-wifi-psk = { };
 
   systemd.services.printer-ap = {
-    description = "Access point uap0 for the 3D printer, on wlan0's channel";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "wpa_supplicant-wlan0.service" ];
-    partOf = [ "wpa_supplicant-wlan0.service" ];
-    startLimitIntervalSec = 0;
+    description = "Access point uap0 for the 3D printer, on wlan0's channel; started by printer-ap-guard";
     serviceConfig = {
       RuntimeDirectory = "printer-ap";
       RuntimeDirectoryMode = "0700";
@@ -112,26 +146,18 @@ in
       ExecStartPre = lib.getExe setup;
       ExecStart = "${pkgs.hostapd}/bin/hostapd /run/printer-ap/hostapd.conf";
       ExecStopPost = "-${pkgs.iw}/bin/iw dev uap0 del";
+    };
+  };
+
+  systemd.services.printer-ap-guard = {
+    description = "Run uap0 only while wlan0 is connected, on its channel; recover wlan0";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "wpa_supplicant-wlan0.service" ];
+    startLimitIntervalSec = 0;
+    serviceConfig = {
+      ExecStart = lib.getExe guard;
       Restart = "always";
       RestartSec = 10;
-    };
-  };
-
-  systemd.services.printer-ap-watch = {
-    description = "Recover wlan0 and keep uap0 on wlan0's channel";
-    serviceConfig = {
-      Type = "oneshot";
-      RuntimeDirectory = "printer-ap-watch";
-      RuntimeDirectoryPreserve = true;
-      ExecStart = lib.getExe watch;
-    };
-  };
-
-  systemd.timers.printer-ap-watch = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnBootSec = "2min";
-      OnUnitActiveSec = "1min";
     };
   };
 
