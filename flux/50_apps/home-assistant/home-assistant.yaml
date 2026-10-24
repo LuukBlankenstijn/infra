@@ -31,7 +31,7 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: config
-          image: ghcr.io/home-assistant/home-assistant:2026.10.3
+          image: ghcr.io/home-assistant/home-assistant:2026.10.4
           command:
             - sh
             - -ec
@@ -47,7 +47,7 @@ spec:
               mountPath: /seed
               readOnly: true
         - name: elegoo-printer
-          image: ghcr.io/home-assistant/home-assistant:2026.10.3
+          image: ghcr.io/home-assistant/home-assistant:2026.10.4
           env:
             - name: ELEGOO_PRINTER_URL
               value: https://github.com/danielcherubini/elegoo-homeassistant/archive/refs/tags/v2.15.0.tar.gz
@@ -69,7 +69,7 @@ spec:
               mountPath: /config
       containers:
         - name: home-assistant
-          image: ghcr.io/home-assistant/home-assistant:2026.10.3
+          image: ghcr.io/home-assistant/home-assistant:2026.10.4
           env:
             - name: TZ
               value: Europe/Amsterdam
