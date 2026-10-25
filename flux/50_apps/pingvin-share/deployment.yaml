@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: pingvin-share
-          image: smp46/pingvin-share-x:v2.0.0
+          image: smp46/pingvin-share-x:v2.1.0
           ports:
             - containerPort: 3000
           env:
