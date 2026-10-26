@@ -106,8 +106,25 @@ the camera needs it while printing. The Printer view controls it directly.
 Entities are named `*.room_3d_printer_*`; the camera is
 `camera.room_3d_printer_chamber_camera`. The dashboard `dashboard-home` has a
 view `printer` (camera, print status and controls, temperatures and fans, failure
-detection), edited through the UI or the websocket API like the rest of the
-dashboard.
+detection, power), edited through the UI or the websocket API like the rest of
+the dashboard.
+
+## Power
+
+The printer hangs on a Zigbee plug, `switch.0xa4c138b77d7a8282` ("Printer
+switch", with `_power`, `_energy`, `_current` and `_voltage` sensors). The plug
+itself is hidden, like the chamber light, so area actions leave it alone. Two UI
+template helpers, attached to the plug's device, guard it:
+
+| Entity | Does |
+| --- | --- |
+| `sensor.printer_power_lock` | `ok` when switching off is safe, otherwise the reason: the print status capitalised (anything but `idle`, `stopped`, `complete`, `error` or no value), `Hot: <n> °C` while the nozzle is at 50 °C or more, or `No reading, <n> W` when there is no nozzle temperature and the plug draws 20 W or more (idle draw is about 8 W). Always `ok` while the plug is off |
+| `switch.printer_power` | follows the plug. On always switches the plug on; off switches it off only while the lock is `ok`, otherwise it leaves the plug on and logs a warning (logger `printer_power`) with the reason |
+
+The Print section of the Printer view shows a Power tile for `switch.printer_power`
+(toggle with confirmation) while the lock is `ok`, and in its place a tile without
+action showing the lock's reason. The Power section shows the plug's power,
+energy, current and voltage and a 24-hour power graph.
 
 ## Failure detection
 
