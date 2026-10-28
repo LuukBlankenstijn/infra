@@ -1,0 +1,112 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tunnelrs-operator
+  namespace: tunnelrs
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tunnelrs-operator
+  namespace: tunnelrs
+rules:
+  - apiGroups: ["traefik.io"]
+    resources: ["ingressroutes", "ingressroutetcps"]
+    verbs: ["get", "list", "watch", "create", "patch", "update", "delete"]
+  - apiGroups: ["events.k8s.io"]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tunnelrs-operator
+  namespace: tunnelrs
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: tunnelrs-operator
+subjects:
+  - kind: ServiceAccount
+    name: tunnelrs-operator
+    namespace: tunnelrs
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tunnelrs-operator
+  namespace: tunnelrs
+data:
+  operator.toml: |
+    key_path = "/etc/tunnelrs/keys/operator.key"
+    namespace = "tunnelrs"
+
+    [server]
+    id = "5387b0ee57707157ac4b3107c339e88659913bc2cb32b90dd6f0a0bf9d764d62"
+    addrs = ["tunnelrs.tunnelrs.svc.cluster.local:7842"]
+
+    [service]
+    name = "tunnelrs"
+    http_port = 8080
+    tls_port = 8443
+
+    [modes]
+    terminate = { template = "traefik-ingressroute" }
+    passthrough = { template = "traefik-ingressroutetcp" }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tunnelrs-operator
+  namespace: tunnelrs
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: tunnelrs-operator
+  template:
+    metadata:
+      labels:
+        app: tunnelrs-operator
+    spec:
+      serviceAccountName: tunnelrs-operator
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: operator
+          image: ghcr.io/luukblankenstijn/tunnelrs/operator:v0.1.0
+          args:
+            - --config
+            - /etc/tunnelrs/config/operator.toml
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 5m
+              memory: 32Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/tunnelrs/config
+              readOnly: true
+            - name: keys
+              mountPath: /etc/tunnelrs/keys
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: tunnelrs-operator
+        - name: keys
+          secret:
+            secretName: tunnelrs-operator-key

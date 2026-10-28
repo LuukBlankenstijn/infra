@@ -26,7 +26,7 @@ with `prune: true`, `wait: true` and ordering only through `dependsOn`:
 | `20_controllers` | cert-manager, CloudNativePG and the Barman Cloud plugin, external-secrets, Longhorn, mariadb-operator, the NVIDIA device plugin, the CSI snapshot controller, Traefik |
 | `30_config` | ClusterIssuer `letsencrypt-dns` and the wildcard certificate, the CoreDNS database-name rewrites, Longhorn backup target, recurring jobs and `longhorn-single`, the `infra-admin` ServiceAccount |
 | `30_openbao` | [OpenBao](openbao.md) |
-| `40_services` | [Postgres](../databases/postgres.md), [MariaDB](../databases/mariadb.md), the [frpc tunnel](edge.md#the-tunnel), the [Pi tunnel](../apps/home-assistant.md#the-pi-tunnel), the [node exporter](../observability/index.md) |
+| `40_services` | [Postgres](../databases/postgres.md), [MariaDB](../databases/mariadb.md), the [frpc tunnel](edge.md#the-tunnel), the [Pi tunnel](../apps/home-assistant.md#the-pi-tunnel), [tunnelrs](../apps/tunnelrs.md), the [node exporter](../observability/index.md) |
 | `50_apps` | the applications listed on the [home page](../index.md#applications), the [observability stack](../observability/index.md) and its device ingest (TLSOption and CA Secret in namespace `traefik`) |
 | `60_netbird-operator` | netbird-operator and its API key |
 | `70_access` | ClusterProxy `home`, the `admins` ClusterRoleBinding, the Ollama SetupKey and SidecarProfile |

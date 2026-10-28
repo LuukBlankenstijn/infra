@@ -1,0 +1,138 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tunnelrs-server
+  namespace: tunnelrs
+data:
+  server.toml: |
+    key_path = "/etc/tunnelrs/keys/server.key"
+    database = "/var/lib/tunnelrs/state.db"
+    http_listen = "0.0.0.0:8080"
+    tls_listen = "0.0.0.0:8443"
+
+    [iroh]
+    bind = "0.0.0.0:7842"
+
+    [[admin_keys]]
+    id = "311647e83ce93f3747adb8e7867fcbe9b9cf55ecd9f117b4c093bf47f44a3f5b"
+    role = "watcher"
+
+    [[admin_keys]]
+    id = "7009ade18de0f5c077a42b210dd99bf55ab17a8b440c67a057b6b196ec148866"
+    role = "admin"
+  ctl.toml: |
+    key_path = "/etc/tunnelrs/keys/ctl.key"
+
+    [server]
+    id = "5387b0ee57707157ac4b3107c339e88659913bc2cb32b90dd6f0a0bf9d764d62"
+    addrs = ["127.0.0.1:7842"]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: state
+  namespace: tunnelrs
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tunnelrs-server
+  namespace: tunnelrs
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: tunnelrs-server
+  template:
+    metadata:
+      labels:
+        app: tunnelrs-server
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: server
+          image: ghcr.io/luukblankenstijn/tunnelrs/server:v0.1.0
+          args:
+            - --config
+            - /etc/tunnelrs/config/server.toml
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: tls
+              containerPort: 8443
+              protocol: TCP
+            - name: iroh
+              containerPort: 7842
+              protocol: UDP
+          readinessProbe:
+            tcpSocket:
+              port: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/tunnelrs/config
+              readOnly: true
+            - name: keys
+              mountPath: /etc/tunnelrs/keys
+              readOnly: true
+            - name: state
+              mountPath: /var/lib/tunnelrs
+      volumes:
+        - name: config
+          configMap:
+            name: tunnelrs-server
+        - name: keys
+          secret:
+            secretName: tunnelrs-server-keys
+        - name: state
+          persistentVolumeClaim:
+            claimName: state
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tunnelrs
+  namespace: tunnelrs
+spec:
+  selector:
+    app: tunnelrs-server
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+    - name: tls
+      port: 8443
+      targetPort: tls
+      protocol: TCP
+    - name: iroh
+      port: 7842
+      targetPort: iroh
+      protocol: UDP

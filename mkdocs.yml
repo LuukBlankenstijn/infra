@@ -74,6 +74,7 @@ nav:
       - Home Assistant: apps/home-assistant.md
       - Pingvin Share: apps/pingvin-share.md
       - 3D printer: apps/printer.md
+      - tunnelrs: apps/tunnelrs.md
   - Databases:
       - Postgres: databases/postgres.md
       - MariaDB: databases/mariadb.md

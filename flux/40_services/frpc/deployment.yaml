@@ -29,6 +29,13 @@ data:
     localPort = 80
     remotePort = 80
     transport.proxyProtocolVersion = "v2"
+
+    [[proxies]]
+    name = "tunnelrs"
+    type = "udp"
+    localIP = "tunnelrs.tunnelrs.svc.cluster.local"
+    localPort = 7842
+    remotePort = 7842
 ---
 apiVersion: apps/v1
 kind: Deployment

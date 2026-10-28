@@ -36,7 +36,7 @@ Loki's ruler sends to the same Alertmanager.
 | Flux, certificates, ingress, OpenBao, external-secrets, device certificates | `rules/platform.yaml` |
 | Postgres, MariaDB, Longhorn, their backups and the weekly restore test | `rules/data.yaml` |
 | edge and home-gateway reporting, the printer's access point on home-gateway, disks, GPU, comin, the frp tunnel | `rules/infra.yaml` |
-| public endpoints probed from inside the cluster; Home Assistant, mosquitto and Ollama workloads | `rules/apps.yaml` |
+| public endpoints probed from inside the cluster; Home Assistant, mosquitto, Ollama and tunnelrs workloads | `rules/apps.yaml` |
 | Alertmanager, rulers, ingestion, ntfy, Alloy | `rules/meta.yaml` |
 | login failures and SSH logins, from logs | `rules/security.yaml` (Loki) |
 
@@ -196,7 +196,7 @@ Beyond the jobs in [In-cluster collection](index.md#in-cluster-collection):
 | --- | --- |
 | Public endpoints and their certificates | Alloy's blackbox exporter, HTTPS probes of Authentik, Vaultwarden, Grafana, Grimmory, Shelfmark, Pingvin Share, NetBird, OpenBao and Longhorn, and a TLS 1.3 probe of `mqtt.luukblankenstijn.nl:443`, through public DNS, so through the edge and the tunnel; `job="blackbox"`, `instance=<host>`. The MQTT probe completes the handshake before mosquitto rejects the missing client certificate, so it still measures the served certificate |
 | zigbee2mqtt connection | `mqtt-exporter` in namespace `home-assistant`, `zigbee2mqtt_bridge_online` from the retained `zigbee2mqtt/bridge/state` |
-| frp proxies per name | `frp_server_proxy_counts_detailed{type, name}` from frps; `FrpTunnelDown` watches `http` and `https` |
+| frp proxies per name | `frp_server_proxy_counts_detailed{type, name}` from frps; `FrpTunnelDown` watches `http` and `https`, `TunnelrsUdpForwardDown` watches `tunnelrs` |
 | Postgres and its backups | PodMonitor `postgres/postgres` (CNPG instance metrics incl. `barman_cloud_*`) |
 | MariaDB | mysqld-exporter deployed by mariadb-operator (`spec.metrics.enabled`) |
 | MariaDB and Longhorn backup schedule | kube-state-metrics Job and CronJob metrics |

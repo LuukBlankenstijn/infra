@@ -22,6 +22,7 @@ and the OpenTofu roots that configure what runs on them.
 | Mesh VPN, login, Kubernetes API over the mesh | [NetBird](cluster/netbird.md) |
 | Services published through NetBird | [NetBird reverse proxy](cluster/reverse-proxy.md) |
 | The 3D printer's Wi-Fi on home-gateway, Home Assistant and slicer access | [3D printer](apps/printer.md) |
+| Exposing services on devices outside the cluster through tunnelrs | [tunnelrs](apps/tunnelrs.md) |
 | Shared database servers | [Postgres](databases/postgres.md), [MariaDB](databases/mariadb.md) |
 | What is backed up, where, and how to restore | [Backups](databases/backups.md) |
 | Metrics, logs, Grafana, device ingest over mTLS | [Observability](observability/index.md) |

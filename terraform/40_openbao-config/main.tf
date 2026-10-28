@@ -46,6 +46,11 @@ locals {
       token      = var.frp_token
       secret_key = var.pi_tunnel_secret_key
     }
+    "tunnelrs/keys" = {
+      server   = local.app_secrets.tunnelrs.server_key
+      operator = local.app_secrets.tunnelrs.operator_key
+      ctl      = local.app_secrets.tunnelrs.ctl_key
+    }
   }
 
   namespace_policies = {

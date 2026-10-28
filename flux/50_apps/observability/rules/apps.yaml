@@ -36,3 +36,15 @@ spec:
           annotations:
             summary: "Ollama has no available replica"
             description: "Home Assistant's printer failure check (ai_task.ollama_ai_task) cannot judge camera frames, so a failed print is not paused."
+    - name: tunnelrs
+      labels:
+        group: apps
+      rules:
+        - alert: TunnelrsDown
+          expr: max by (deployment) (kube_deployment_status_replicas_available{namespace="tunnelrs"}) < 1 or absent(kube_deployment_status_replicas_available{namespace="tunnelrs",deployment="tunnelrs-server"}) or absent(kube_deployment_status_replicas_available{namespace="tunnelrs",deployment="tunnelrs-operator"})
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "tunnelrs/{{ $labels.deployment }} has no available replica"
+            description: "Without the server every tunneled hostname fails; without the operator new or withdrawn routes do not reach Traefik."

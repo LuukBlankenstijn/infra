@@ -23,7 +23,7 @@ variable "bao_jwt" {
 }
 
 variable "app_secrets" {
-  description = "Decrypted secrets/apps.yaml: externally issued credentials (SMTP passwords, the existing Authentik secret key). Exported from sops by .envrc; never set it by hand."
+  description = "Decrypted secrets/apps.yaml: externally issued credentials (SMTP passwords, the existing Authentik secret key, the tunnelrs iroh keys). Exported from sops by .envrc; never set it by hand."
   type        = string
   sensitive   = true
 }
