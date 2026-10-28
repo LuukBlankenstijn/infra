@@ -15,6 +15,10 @@ every start; nobody holds unseal shares. The Raft data is useless without that
 key, so a restore of the volume needs the same SealedSecret (and therefore the
 pinned sealing key, see [Secrets](secrets.md#sealedsecrets)).
 
+Because it unseals itself, the StatefulSet uses `updateStrategyType:
+RollingUpdate` instead of the chart's `OnDelete`: an image bump restarts the pod
+directly, with about a minute in which external-secrets cannot reach OpenBao.
+
 ## Self-initialisation
 
 The `initialize "auth"` stanza runs on first start against empty storage. It:
