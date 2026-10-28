@@ -54,6 +54,23 @@ running host can hang it.
 `check` evaluates every host (`nix flake check`) and builds each host's closure,
 `home-gateway` on an arm64 runner.
 
+## home-server's disk
+
+The root filesystem (`nvme0n1p3`, 728 GB) holds the Nix store, containerd's
+images under `/var/lib/rancher/k3s/agent/containerd` and the Longhorn replicas
+under `/var/lib/longhorn`. Longhorn counts all of it: it stops scheduling new
+replicas when less than 25% of the filesystem is free (its default
+`storage-minimal-available-percentage`), whatever fills it.
+
+Unused images are therefore removed early. `services.k3s.extraKubeletConfig`
+sets the kubelet's image garbage collection to start at 65% disk usage and
+delete unused images down to 55%, below Longhorn's 75% cutoff; the kubelet's
+default of 85% would never start before Longhorn blocks. Every Renovate bump
+leaves the old image behind; Ollama's are about 3.5 GB compressed each.
+`imageMaximumGCAge` cannot be set here, because k3s's own drop-in
+`kubelet.conf.d/00-k3s-defaults.conf` sets it to `0s` and drop-ins override the
+`--config` file.
+
 ## Installing home-gateway
 
 `packages.aarch64-linux.home-gateway-sd-image` is

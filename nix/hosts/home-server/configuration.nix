@@ -56,6 +56,10 @@
   '';
   services.k3s.extraFlags = [ "--resolv-conf=/etc/k3s-resolv.conf" ];
   services.k3s.package = pkgs.k3s_1_36;
+  services.k3s.extraKubeletConfig = {
+    imageGCHighThresholdPercent = 65;
+    imageGCLowThresholdPercent = 55;
+  };
 
   services.prometheus.exporters = {
     smartctl.enable = true;

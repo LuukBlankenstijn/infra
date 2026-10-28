@@ -114,12 +114,21 @@ spec:
           annotations:
             summary: "Longhorn cannot reach its S3 backup target"
         - alert: LonghornStorageFilling
-          expr: max by (node) (longhorn_node_storage_usage_bytes / longhorn_node_storage_capacity_bytes) > 0.85
+          expr: max by (node, disk) (longhorn_disk_usage_bytes / longhorn_disk_capacity_bytes) > 0.7
           for: 30m
           labels:
             severity: warning
           annotations:
-            summary: "Longhorn storage on {{ $labels.node }} is {{ $value | humanizePercentage }} full"
+            summary: "Longhorn disk {{ $labels.disk }} on {{ $labels.node }} is {{ $value | humanizePercentage }} full"
+            description: "Longhorn stops scheduling replicas at 75%. The usage counts the whole filesystem, including container images."
+        - alert: LonghornDiskUnschedulable
+          expr: max by (node, disk) (longhorn_disk_status{condition="schedulable"}) == 0
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Longhorn disk {{ $labels.disk }} on {{ $labels.node }} accepts no new replicas"
+            description: "kubectl -n longhorn-system get nodes.longhorn.io -o yaml shows the reason in status.diskStatus; new volumes and rebuilds fail until it clears."
     - name: restore-test
       labels:
         group: data
