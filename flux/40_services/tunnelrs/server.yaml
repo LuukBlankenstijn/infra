@@ -12,6 +12,7 @@ data:
 
     [iroh]
     bind = "0.0.0.0:7842"
+    relays = ["https://relay.luukblankenstijn.nl:8443"]
 
     [[admin_keys]]
     id = "311647e83ce93f3747adb8e7867fcbe9b9cf55ecd9f117b4c093bf47f44a3f5b"

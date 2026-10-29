@@ -398,6 +398,12 @@ spec:
             }
 
             target {
+              name    = "iroh-relay"
+              address = "https://relay.luukblankenstijn.nl:8443/healthz"
+              module  = "https"
+            }
+
+            target {
               name    = "mqtt"
               address = "mqtt.luukblankenstijn.nl:443"
               module  = "mqtts"

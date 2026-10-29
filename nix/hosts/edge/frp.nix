@@ -22,7 +22,7 @@ in
         token = "{{ .Envs.FRP_TOKEN }}";
       };
       transport.tls.force = true;
-      allowPorts = map (port: { single = port; }) (ports.forwardedTcp ++ ports.forwardedUdp);
+      allowPorts = map (port: { single = port; }) ports.forwardedTcp;
       enablePrometheus = true;
       webServer = {
         addr = "127.0.0.1";
@@ -32,5 +32,4 @@ in
   };
 
   networking.firewall.allowedTCPPorts = [ ports.frpControl ] ++ ports.forwardedTcp;
-  networking.firewall.allowedUDPPorts = ports.forwardedUdp;
 }

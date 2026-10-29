@@ -15,8 +15,8 @@ Nothing secret is committed in plain text.
 `.sops.yaml` encrypts every `secrets/*.yaml` to the admin age key;
 `secrets/edge.yaml`, `secrets/home-server.yaml`, `secrets/home-gateway.yaml`
 and `secrets/openbao/{edge,home-gateway}.yaml` are also encrypted to that host's
-age key so sops-nix can decrypt them on the host (see
-[NixOS hosts](../hosts.md#secrets)).
+age key, and `secrets/cloudflare.yaml` to the edge's, so sops-nix can decrypt
+them on the host (see [NixOS hosts](../hosts.md#secrets)).
 
 | File | Keys | Consumed by |
 | --- | --- | --- |
@@ -29,7 +29,7 @@ age key so sops-nix can decrypt them on the host (see
 | `openbao/edge.yaml`, `openbao/home-gateway.yaml` | `openbao/role_id`, `openbao/secret_id` | that host (sops-nix), `cfg.deviceCert` AppRole login |
 | `apps.yaml` | `authentik.secret_key`, `authentik.smtp_password`, `vaultwarden.smtp_password`, `tunnelrs.server_key`, `tunnelrs.operator_key`, `tunnelrs.ctl_key` | `40_openbao-config`; the tunnelrs keys → `secret/tunnelrs/keys` |
 | `netbird.yaml` | `owner_email`, `owner_password`, `api_token`, `proxy_token` | `40_openbao-config` (`api_token`, `proxy_token`); `60_netbird-config` (`api_token`) |
-| `cloudflare.yaml` | `api_token`, `zone_id` | `10_edge` |
+| `cloudflare.yaml` | `api_token`, `zone_id` | `10_edge`; edge host (sops-nix), `api_token` for the ACME DNS-01 challenge of the iroh relay certificate |
 | `hcloud.yaml` | `token` | `10_edge` |
 
 `.envrc` decrypts with `sops_export VAR file [key]`; a file that does not decrypt

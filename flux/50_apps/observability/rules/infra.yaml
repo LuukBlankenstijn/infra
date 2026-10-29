@@ -90,10 +90,3 @@ spec:
             severity: critical
           annotations:
             summary: "The cluster's http/https proxies are not registered on the edge; nothing public reaches the cluster"
-        - alert: TunnelrsUdpForwardDown
-          expr: sum(frp_server_proxy_counts_detailed{type="udp", name="tunnelrs"}) < 1 or absent(frp_server_proxy_counts_detailed{type="udp", name="tunnelrs"})
-          for: 5m
-          labels:
-            severity: critical
-          annotations:
-            summary: "The tunnelrs udp proxy is not registered on the edge; connectors cannot reach the tunnelrs server"

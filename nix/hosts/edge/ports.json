@@ -2,6 +2,7 @@
   "ssh": 22,
   "frpControl": 7000,
   "forwardedTcp": [80, 443],
-  "forwardedUdp": [7842],
-  "stun": 3478
+  "stun": 3478,
+  "irohRelayHttps": 8443,
+  "irohRelayQad": 7842
 }

@@ -10,9 +10,11 @@ server's routes into Traefik IngressRoutes.
 flowchart LR
   visitor[Visitor] -->|443| frps[frps on edge] --> traefik[Traefik websecure]
   traefik -->|IngressRoute / IngressRouteTCP| server[tunnelrs server<br/>8080 http, 8443 tls]
-  connector[Connector on device] -->|7842/udp| frps2[frps on edge] -->|frp udp proxy| iroh[tunnelrs server<br/>7842/udp iroh]
+  connector[Connector on device] -->|8443/tcp| relay[iroh relay on edge<br/>8443/tcp relay, 7842/udp QAD]
+  iroh[tunnelrs server<br/>iroh] -->|8443/tcp| relay
+  connector -. direct QUIC after hole punching .- iroh
   server -. data streams .-> connector --> backend[Backend on device]
-  operator[tunnelrs operator] -->|watch routes, iroh| iroh
+  operator[tunnelrs operator] -->|watch routes, Service 7842/udp| iroh
   operator -->|server-side apply| traefik
 ```
 
@@ -23,16 +25,20 @@ flowchart LR
 | What | Details |
 | --- | --- |
 | `tunnelrs-server` Deployment | image `ghcr.io/luukblankenstijn/tunnelrs/server`, one replica, `strategy: Recreate`. Grants, enrollment and the last announcement per connector live in SQLite on Longhorn volume `state` |
-| Service `tunnelrs` | `8080/tcp` plain HTTP for terminate routes, `8443/tcp` TLS passthrough routes, `7842/udp` iroh |
+| Service `tunnelrs` | `8080/tcp` plain HTTP for terminate routes, `8443/tcp` TLS passthrough routes, `7842/udp` iroh for the in-cluster operator |
 | `tunnelrs-operator` Deployment | image `ghcr.io/luukblankenstijn/tunnelrs/operator`; watches the server's routes and server-side applies an `IngressRoute` (terminate) or `IngressRouteTCP` with TLS passthrough (passthrough) per hostname in namespace `tunnelrs`, labelled `app.kubernetes.io/managed-by=tunnelrs-operator`. Role: Traefik `ingressroutes`/`ingressroutetcps` and `events` in `tunnelrs` only |
 
 Terminate routes get TLS on `websecure` from the default TLSStore certificate, so
 only hostnames under `luukblankenstijn.nl` get a valid certificate. Passthrough
 routes need their own certificate on the backend.
 
-The edge forwards `7842/udp` to the Service through frp; see
-[Edge and public ingress](../cluster/edge.md). Connectors dial
-`hertzner.luukblankenstijn.nl:7842`.
+The server and the connectors reach each other through the public iroh relay on
+the edge, `https://relay.luukblankenstijn.nl:8443` (`[iroh] relays` in
+`server.toml`); see [Edge and public ingress](../cluster/edge.md). Both learn
+their public addresses from the relay's QUIC address discovery on `7842/udp` and
+connect directly when the NATs allow hole punching; otherwise the traffic stays
+relayed. The cluster takes no inbound UDP: the `7842/udp` Service port is only
+for the operator, which dials `tunnelrs.tunnelrs.svc.cluster.local:7842`.
 
 ## Identities
 
@@ -81,7 +87,7 @@ services.tunnelrs.connector = {
   enable = true;
   server = {
     id = "5387b0ee57707157ac4b3107c339e88659913bc2cb32b90dd6f0a0bf9d764d62";
-    addrs = [ "hertzner.luukblankenstijn.nl:7842" ];
+    relays = [ "https://relay.luukblankenstijn.nl:8443" ];
   };
   exposures."app.luukblankenstijn.nl".backend = "127.0.0.1:8080";
 };
@@ -90,11 +96,11 @@ services.tunnelrs.connector = {
 The connector generates its key in `/var/lib/tunnelrs-connector` on first start
 and logs its ID with the `tunnelrs-ctl approve` command to run. Elsewhere, run
 `ghcr.io/luukblankenstijn/tunnelrs/connector` with `--config` pointing at the
-same settings in TOML (`key_path`, `[server]`, `[[expose]] hostname, backend, tls`).
+same settings in TOML (`key_path`, `[server] id, relays`, `[[expose]] hostname, backend, tls`).
 
 ## Alerts
 
 | Alert | Fires when |
 | --- | --- |
 | `TunnelrsDown` | `tunnelrs-server` or `tunnelrs-operator` has no available replica for 5 minutes |
-| `TunnelrsUdpForwardDown` | the `tunnelrs` udp proxy is not registered on frps for 5 minutes, so no connector can reach the server |
+| `IrohRelayDown` | the blackbox probe of `https://relay.luukblankenstijn.nl:8443/healthz` fails or is missing for 5 minutes, so connectors cannot reach the server through the relay |

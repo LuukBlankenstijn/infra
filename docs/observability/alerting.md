@@ -33,7 +33,7 @@ Loki's ruler sends to the same Alertmanager.
 | Source | File |
 | --- | --- |
 | Kubernetes, node and kube-state-metrics rules from kube-prometheus-stack, installed rules-only | `flux/50_apps/observability/rules/kube-prometheus-stack.yaml` |
-| Flux, certificates, ingress, OpenBao, external-secrets, device certificates | `rules/platform.yaml` |
+| Flux, certificates, ingress, OpenBao, external-secrets, device certificates, the iroh relay on the edge | `rules/platform.yaml` |
 | Postgres, MariaDB, Longhorn, their backups and the weekly restore test | `rules/data.yaml` |
 | edge and home-gateway reporting, the printer's access point on home-gateway, disks, GPU, comin, the frp tunnel | `rules/infra.yaml` |
 | public endpoints probed from inside the cluster; Home Assistant, mosquitto, Ollama and tunnelrs workloads | `rules/apps.yaml` |
@@ -194,9 +194,9 @@ Beyond the jobs in [In-cluster collection](index.md#in-cluster-collection):
 
 | Signal | Source |
 | --- | --- |
-| Public endpoints and their certificates | Alloy's blackbox exporter, HTTPS probes of Authentik, Vaultwarden, Grafana, Grimmory, Shelfmark, Pingvin Share, NetBird, OpenBao and Longhorn, and a TLS 1.3 probe of `mqtt.luukblankenstijn.nl:443`, through public DNS, so through the edge and the tunnel; `job="blackbox"`, `instance=<host>`. The MQTT probe completes the handshake before mosquitto rejects the missing client certificate, so it still measures the served certificate |
+| Public endpoints and their certificates | Alloy's blackbox exporter, HTTPS probes of Authentik, Vaultwarden, Grafana, Grimmory, Shelfmark, Pingvin Share, NetBird, OpenBao and Longhorn, and a TLS 1.3 probe of `mqtt.luukblankenstijn.nl:443`, through public DNS, so through the edge and the tunnel; `job="blackbox"`, `instance=<host>`. The MQTT probe completes the handshake before mosquitto rejects the missing client certificate, so it still measures the served certificate. An HTTPS probe of `https://relay.luukblankenstijn.nl:8443/healthz` reaches the iroh relay on the edge itself, not through the tunnel; `IrohRelayDown` watches it (`instance="relay.luukblankenstijn.nl"`), and `PublicEndpointDown` fires for it as well |
 | zigbee2mqtt connection | `mqtt-exporter` in namespace `home-assistant`, `zigbee2mqtt_bridge_online` from the retained `zigbee2mqtt/bridge/state` |
-| frp proxies per name | `frp_server_proxy_counts_detailed{type, name}` from frps; `FrpTunnelDown` watches `http` and `https`, `TunnelrsUdpForwardDown` watches `tunnelrs` |
+| frp proxies per name | `frp_server_proxy_counts_detailed{type, name}` from frps; `FrpTunnelDown` watches `http` and `https` |
 | Postgres and its backups | PodMonitor `postgres/postgres` (CNPG instance metrics incl. `barman_cloud_*`) |
 | MariaDB | mysqld-exporter deployed by mariadb-operator (`spec.metrics.enabled`) |
 | MariaDB and Longhorn backup schedule | kube-state-metrics Job and CronJob metrics |

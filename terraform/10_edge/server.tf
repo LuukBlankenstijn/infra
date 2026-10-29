@@ -2,8 +2,8 @@ locals {
   ports = jsondecode(file("${path.module}/../../nix/hosts/edge/ports.json"))
 
   firewall_rules = concat(
-    [for port in concat([local.ports.ssh, local.ports.frpControl], local.ports.forwardedTcp) : { protocol = "tcp", port = tostring(port) }],
-    [for port in concat([local.ports.stun], local.ports.forwardedUdp) : { protocol = "udp", port = tostring(port) }],
+    [for port in concat([local.ports.ssh, local.ports.frpControl, local.ports.irohRelayHttps], local.ports.forwardedTcp) : { protocol = "tcp", port = tostring(port) }],
+    [for port in [local.ports.stun, local.ports.irohRelayQad] : { protocol = "udp", port = tostring(port) }],
   )
 }
 

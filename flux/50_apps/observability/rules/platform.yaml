@@ -110,3 +110,15 @@ spec:
             severity: warning
           annotations:
             summary: "{{ $value | humanizePercentage }} of requests to {{ $labels.service }} fail with 5xx"
+    - name: iroh-relay
+      labels:
+        group: platform
+      rules:
+        - alert: IrohRelayDown
+          expr: probe_success{job="blackbox", instance="relay.luukblankenstijn.nl"} == 0 or absent(probe_success{job="blackbox", instance="relay.luukblankenstijn.nl"})
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "The iroh relay on the edge is unreachable; tunnelrs connectors cannot reach the tunnelrs server through it"
+            description: "Relayed connections and new connections fail; connections already on a direct path keep working. PublicEndpointDown fires for the same probe."
