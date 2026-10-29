@@ -47,7 +47,7 @@ spec:
     spec:
       containers:
         - name: proxy
-          image: netbirdio/reverse-proxy:0.81.2
+          image: netbirdio/reverse-proxy:0.82.0
           env:
             - name: NB_PROXY_DOMAIN
               value: proxy.luukblankenstijn.nl
