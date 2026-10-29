@@ -83,6 +83,10 @@ The Deployment has one replica and `strategy: Recreate`. frps rejects a second
 client registering a proxy name that is already registered, so two frpc pods
 must never overlap.
 
+frpc reads its configuration only at startup. `frpc.toml` in the same directory
+becomes the ConfigMap through a `configMapGenerator`, whose name carries a hash of
+the content, so any change to the file rolls the pod.
+
 ## Secret proxies
 
 frps also carries the [Pi tunnel](../apps/home-assistant.md#the-pi-tunnel):
