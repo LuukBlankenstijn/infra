@@ -61,7 +61,7 @@ A new connector shows up as `pending` with the hostnames it asked for and gets
 no traffic until it is approved:
 
 ```bash
-ctl() { kubectl -n tunnelrs exec deploy/tunnelrs-server -- tunnelrs-ctl --config /etc/tunnelrs/config/ctl.toml "$@"; }
+ctl() { kubectl -n tunnelrs exec deploy/tunnelrs-server -- tunnelrs-ctl "$@"; }
 ctl list
 ctl approve <connector-id>
 ctl approve <connector-id> --hosts '*.lab.luukblankenstijn.nl'

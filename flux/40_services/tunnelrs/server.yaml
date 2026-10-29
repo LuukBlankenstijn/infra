@@ -67,7 +67,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: server
-          image: ghcr.io/luukblankenstijn/tunnelrs/server:v0.1.0
+          image: ghcr.io/luukblankenstijn/tunnelrs/server:v0.1.1
           args:
             - --config
             - /etc/tunnelrs/config/server.toml
