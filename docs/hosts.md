@@ -67,9 +67,9 @@ sets the kubelet's image garbage collection to start at 65% disk usage and
 delete unused images down to 55%, below Longhorn's 75% cutoff; the kubelet's
 default of 85% would never start before Longhorn blocks. Every Renovate bump
 leaves the old image behind; Ollama's are about 3.5 GB compressed each.
-`imageMaximumGCAge` cannot be set here, because k3s's own drop-in
-`kubelet.conf.d/00-k3s-defaults.conf` sets it to `0s` and drop-ins override the
-`--config` file.
+There is no age limit on images: `extraKubeletConfig` becomes the kubelet's
+`--config` file, and k3s's drop-in `kubelet.conf.d/00-k3s-defaults.conf`, which
+overrides it, sets `imageMaximumGCAge` to `0s`. The thresholds are enough.
 
 ## Installing home-gateway
 
