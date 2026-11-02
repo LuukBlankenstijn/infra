@@ -99,6 +99,13 @@ original root password.
   empty group `none`. The Postgres and MariaDB volumes use it: a Longhorn backup
   of a running database is only crash-consistent and duplicates the database
   backups above.
+- Mimir's PVC `observability/data-mimir-0` carries
+  `recurring-job.longhorn.io/source: enabled` and
+  `recurring-job-group.longhorn.io/none: enabled` (set in the StatefulSet's
+  `volumeClaimTemplates`), so Longhorn moves its volume from group `default` to
+  the empty group `none`: no backups, snapshots or trims. Metrics history is not
+  worth backing up, and Mimir's high churn made its backups the
+  largest and most failure-prone upload. A lost volume means Mimir starts empty.
 - `daily-backup` keeps backups by age (`retentionPolicy: age-based`,
   `retainAge: 336h`), not by count. When one volume fails, the job pod exits
   with an error and Kubernetes reruns it (Longhorn fixes `backoffLimit` at 3);
