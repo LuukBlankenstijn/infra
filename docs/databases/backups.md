@@ -93,8 +93,8 @@ original root password.
 - `RecurringJob`s `daily-backup`, `daily-snapshot` and `fs-trim` (Sundays 00:00),
   all in group `default`. Longhorn puts every volume without recurring-job
   labels of its own in that group, so every volume on the `longhorn`
-  StorageClass is covered: OpenBao's Raft data, `netbird-data`, and the
-  application volumes.
+  StorageClass except Mimir's (below) is covered: OpenBao's Raft data,
+  `netbird-data`, and the application volumes.
 - StorageClass `longhorn-single` (one replica) sets `recurringJobSelector` to the
   empty group `none`. The Postgres and MariaDB volumes use it: a Longhorn backup
   of a running database is only crash-consistent and duplicates the database
@@ -189,6 +189,8 @@ same values.
 - **MariaDB point-in-time recovery.** See [MariaDB](#mariadb): only the nightly
   base backups exist.
 - **Longhorn restore tests.** Only the databases are test-restored.
+- **Mimir.** Its volume is in no backup, snapshot or trim job; see
+  [Longhorn](#longhorn).
 
 Failed, stale and missing backups, a stalled WAL archive and a failed or
 overdue restore test alert in group `data` (see
