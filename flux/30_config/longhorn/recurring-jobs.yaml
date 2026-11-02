@@ -12,7 +12,8 @@ spec:
     job: backup-daily
   name: daily-backup
   parameters: {}
-  retain: 14
+  retentionPolicy: age-based
+  retainAge: 336h
   task: backup
 ---
 apiVersion: longhorn.io/v1beta2

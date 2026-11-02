@@ -7,7 +7,7 @@ Everything is written to Hetzner Object Storage, `https://fsn1.your-objectstorag
 | --- | --- | --- | --- | --- |
 | Postgres | Barman Cloud plugin: WAL archive + base backups | `s3://luuk-postgres/` | WAL continuously, base backup 03:00 | 30 days |
 | MariaDB | `PhysicalBackup` | `s3://luuk-mariadb/base/` | base backup 03:00 | 30 days (`720h`) |
-| Longhorn volumes in recurring-job group `default` | `RecurringJob` `daily-backup` | bucket `luuk` (`s3://luuk@fsn1/`) | 02:30 | 14 backups |
+| Longhorn volumes in recurring-job group `default` | `RecurringJob` `daily-backup` | bucket `luuk` (`s3://luuk@fsn1/`) | 02:30 | 14 days (`336h`) |
 | Same volumes, on the node | `RecurringJob` `daily-snapshot` | local snapshots | 03:03 | 31 snapshots |
 | OpenTofu state | S3 backend, encrypted | bucket `luuk`, `<root>/terraform.tfstate` | every apply | - |
 
@@ -99,6 +99,17 @@ original root password.
   empty group `none`. The Postgres and MariaDB volumes use it: a Longhorn backup
   of a running database is only crash-consistent and duplicates the database
   backups above.
+- `daily-backup` keeps backups by age (`retentionPolicy: age-based`,
+  `retainAge: 336h`), not by count. When one volume fails, the job pod exits
+  with an error and Kubernetes reruns it (Longhorn fixes `backoffLimit` at 3);
+  every rerun backs up all volumes again. By age, those extra backups do not push
+  older days out of the window.
+- Failed backups are deleted after 12 hours (`defaultSettings.failedBackupTTL:
+  720` in `flux/20_controllers/longhorn`). Deleting a backup holds that volume's
+  lock in the backupstore and garbage-collects its blocks, which takes from
+  minutes to over half an hour on Hetzner. Longhorn's default of 24 hours would
+  run that deletion during the next night's job, and the volume's backup would
+  fail on the lock.
 
 The default VolumeSnapshotClass `longhorn-backup-vsc` (`type: bak`) turns a CSI
 `VolumeSnapshot` into a Longhorn backup in the same target.
