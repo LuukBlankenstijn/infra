@@ -16,6 +16,17 @@ spec:
   upgrade:
     remediation:
       retries: 3
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: StatefulSet
+              name: minecraft
+            patch: |
+              - op: remove
+                path: /spec/volumeClaimTemplates/0/metadata/labels/chart
+              - op: remove
+                path: /spec/volumeClaimTemplates/0/metadata/labels/app.kubernetes.io~1version
   values:
     fullnameOverride: minecraft
     image:

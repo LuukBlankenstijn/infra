@@ -42,7 +42,6 @@
     },
     {
       "matchPackageNames": [
-        "minecraft",
         "longhorn"
       ],
       "automerge": false

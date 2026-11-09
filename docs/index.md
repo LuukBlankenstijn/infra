@@ -57,12 +57,10 @@ managed in the Authentik UI. Shelfmark is additionally open to group
 `Booklore`. The IngressRoute `authentik/auth-redirect` sends
 `/outpost.goauthentik.io/` on every subdomain to Authentik.
 
-Every Minecraft chart version changes the `chart` label in the StatefulSet's
-`volumeClaimTemplates`, an immutable field, so Renovate does not automerge it.
-To upgrade: `flux -n minecraft suspend hr minecraft`, merge the bump, wait until
-`flux -n minecraft get sources chart` shows the new version, then
-`kubectl -n minecraft delete sts minecraft --cascade=orphan` and
-`flux -n minecraft resume hr minecraft`.
+The Minecraft chart puts its version in the `chart` and
+`app.kubernetes.io/version` labels of the StatefulSet's `volumeClaimTemplates`,
+an immutable field. A Kustomize post-renderer on the HelmRelease removes both
+labels, so chart upgrades apply in place.
 
 ## Working in the repo
 
