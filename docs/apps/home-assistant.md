@@ -146,9 +146,13 @@ copies it and the token to `secret/pi-tunnel/frp`.
 | Frontend | `127.0.0.1:8080`, reached only through the tunnel |
 | Home Assistant discovery | on |
 
-zigbee2mqtt reads the certificate only when it starts. The path unit
-`zigbee2mqtt-device-cert` restarts it whenever OpenBao Agent writes a renewed
-certificate.
+zigbee2mqtt reads the certificate only when it starts, and keeps a copy of the
+one it loaded in `/run/zigbee2mqtt-device-cert/loaded.pem`. OpenBao Agent
+rewrites the certificate file on every re-authentication (about every 40
+minutes), mostly with the same certificate. The path unit
+`zigbee2mqtt-device-cert` restarts zigbee2mqtt only when the file differs from
+that copy, because a restart makes every Zigbee entity in Home Assistant
+unavailable for a few seconds.
 
 ## Alerts
 

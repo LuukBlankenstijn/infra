@@ -1,6 +1,7 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 let
   tls = config.cfg.deviceCert;
+  loadedCert = "/run/zigbee2mqtt-device-cert/loaded.pem";
 in
 {
   services.zigbee2mqtt = {
@@ -28,7 +29,10 @@ in
   systemd.services.zigbee2mqtt = {
     wants = [ "network-online.target" ];
     after = [ "network-online.target" ];
-    serviceConfig.SupplementaryGroups = [ tls.group ];
+    serviceConfig = {
+      SupplementaryGroups = [ tls.group ];
+      ExecStartPre = [ "+${pkgs.coreutils}/bin/install -D -m 0600 ${tls.certFile} ${loadedCert}" ];
+    };
   };
 
   systemd.paths.zigbee2mqtt-device-cert = {
@@ -37,10 +41,10 @@ in
   };
 
   systemd.services.zigbee2mqtt-device-cert = {
-    description = "Restart zigbee2mqtt so it connects with the renewed device certificate";
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${config.systemd.package}/bin/systemctl try-restart zigbee2mqtt.service";
-    };
+    description = "Restart zigbee2mqtt when the device certificate differs from the one it loaded";
+    serviceConfig.Type = "oneshot";
+    script = ''
+      ${pkgs.diffutils}/bin/cmp -s ${tls.certFile} ${loadedCert} || systemctl try-restart zigbee2mqtt.service
+    '';
   };
 }
