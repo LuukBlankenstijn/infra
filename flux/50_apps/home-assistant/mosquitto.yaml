@@ -73,7 +73,7 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: passwd
-          image: eclipse-mosquitto:2.0.22
+          image: eclipse-mosquitto:2.0.23
           command:
             - sh
             - -ec
@@ -106,7 +106,7 @@ spec:
               mountPath: /tmp
       containers:
         - name: mosquitto
-          image: eclipse-mosquitto:2.0.22
+          image: eclipse-mosquitto:2.0.23
           command: ["mosquitto", "-c", "/mosquitto/config/mosquitto.conf"]
           ports:
             - name: mqtt
@@ -143,7 +143,7 @@ spec:
             - name: data
               mountPath: /mosquitto/data
         - name: reload
-          image: eclipse-mosquitto:2.0.22
+          image: eclipse-mosquitto:2.0.23
           command: ["sh", "/mosquitto/config/reload.sh"]
           securityContext: *restricted
           resources:
