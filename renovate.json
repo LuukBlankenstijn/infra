@@ -23,6 +23,18 @@
         "https://github\\.com/(?<depName>[^/\\s]+/[^/\\s]+)/archive/refs/tags/(?<currentValue>[^/\\s]+)\\.tar\\.gz"
       ],
       "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^flux/clusters/home/flux-system/flux-instance\\.yaml$/"
+      ],
+      "matchStrings": [
+        "distribution:\\s+version: \"(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "fluxcd/flux2",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.+)$"
     }
   ],
   "platformAutomerge": true,
