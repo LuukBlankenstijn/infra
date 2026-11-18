@@ -2,8 +2,8 @@
 
 The FluxInstance in `flux/clusters/home/flux-system/` syncs `flux/clusters/home`
 from `main`. It pins Flux to an exact version (`2.10.0`); Renovate bumps it from
-the `fluxcd/flux2` GitHub releases. flux-operator can only install versions it
-embeds, so a Flux bump may need a flux-operator bump first. Every numbered directory under `flux/` has one Kustomization there,
+the `fluxcd/flux2` GitHub releases, without automerge: flux-operator can only
+install versions it embeds, so a Flux bump may need a flux-operator bump first. Every numbered directory under `flux/` has one Kustomization there,
 with `prune: true`, `wait: true` and ordering only through `dependsOn`:
 
 | Kustomization | Path | Depends on |
