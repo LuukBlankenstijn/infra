@@ -149,6 +149,36 @@ bed it gives `empty_bed` or `none`, with an occasional stray failure label, whic
 is why it takes 3 strikes in a row and starts above layer 10, when the part is
 visible from the camera's angle.
 
+## Print jobs
+
+The Print job section of the Printer view starts a file from the printer's own
+storage, now or at a set time. Pick the file (refresh the list first after an
+upload), then press Start now or set Start at and switch Scheduled on.
+
+| Helper | Holds |
+| --- | --- |
+| `input_text.printer_job_file` | the file to print, copied from `select.room_3d_printer_print_file`, which has no value while the printer is off |
+| `input_datetime.printer_start_at` | date and time of the scheduled start |
+| `input_boolean.printer_scheduled` | arms the schedule; switched off when it fires |
+| `input_boolean.printer_leveling` | auto bed leveling before the print |
+| `input_boolean.printer_auto_off` | power off after a print |
+| `input_text.printer_bed_check` | the last bed check: both verdicts and the reason |
+
+`script.printer_start_job` switches `switch.printer_power` on, waits up to 10
+minutes for the printer to be online and `idle`, turns the chamber light on and
+asks `ai_task.generate_data` twice, 10 s apart, whether the bed is `empty`,
+`occupied` or `unsure`. Two times `empty` starts the file with
+`elegoo_printer.start_print`. Anything else sends a notification with the camera
+image and Start anyway / Cancel actions; without an answer in 15 minutes the job
+is cancelled. Every outcome ends in a notification.
+
+| Automation | Does |
+| --- | --- |
+| `printer_job_file_pick` | copies a picked file into `input_text.printer_job_file` |
+| `printer_scheduled_start` | at `input_datetime.printer_start_at`, while Scheduled is on: switches Scheduled off and runs the script |
+| `printer_pause_notify` | notifies with the layer, Z, the camera image and a Resume action when the printer pauses and the AI check did not cause it, for example a pause in the G-code for inserting nuts |
+| `printer_auto_off` | while Power off after is on: after a print completes or is stopped, waits for the bed to drop below 40 °C and switches `switch.printer_power` off, unless a print started meanwhile |
+
 ## Slicer
 
 The laptop reaches `10.77.0.0/24` over NetBird: `60_netbird-config` declares the
