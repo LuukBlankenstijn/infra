@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway
+  namespace: agents
+data:
+  config.yaml: |
+    config:
+      logging:
+        format: json
+    frontendPolicies:
+      accessLog:
+        add:
+          user: 'has(jwt.preferred_username) ? jwt.preferred_username : ""'
+    mcp:
+      port: 3000
+      prefixMode: always
+      policies:
+        mcpAuthentication:
+          mode: strict
+          issuer: https://auth.luukblankenstijn.nl/application/o/mcp/
+          audiences: [mcp]
+          clientId: mcp
+          provider:
+            authentik: {}
+          resourceMetadata:
+            resource: http://mcp.peers.luuk.internal:3000/mcp
+            scopesSupported: [openid, profile, email, offline_access]
+            bearerMethodsSupported: [header]
+        mcpAuthorization:
+          rules:
+            - '"infra-admins" in jwt.groups'
+      targets:
+        - name: homeassistant
+          mcp:
+            host: http://home-assistant-mcp.agents.svc:8086/mcp
+        - name: grafana
+          mcp:
+            host: http://grafana-mcp.agents.svc:8000/mcp
+          policies:
+            backendAuth:
+              key: "$GRAFANA_MCP_TOKEN"
+        - name: flux
+          mcp:
+            host: http://flux-operator-mcp.agents.svc:9090/mcp
+        - name: kubernetes
+          mcp:
+            host: http://kubernetes-mcp.agents.svc:8080/mcp
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: agents
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: { app: gateway }
+  template:
+    metadata:
+      labels: { app: gateway, netbird-peer: mcp }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "15020"
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 65532
+        runAsGroup: 65532
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: agentgateway
+          image: cr.agentgateway.dev/agentgateway:v1.7.0
+          args: ["-f", "/config/config.yaml"]
+          env:
+            - name: SESSION_KEY
+              valueFrom:
+                secretKeyRef: { name: gateway, key: session_key }
+            - name: GRAFANA_MCP_TOKEN
+              valueFrom:
+                secretKeyRef: { name: gateway, key: grafana_mcp_token }
+          ports:
+            - name: mcp
+              containerPort: 3000
+            - name: metrics
+              containerPort: 15020
+            - name: readiness
+              containerPort: 15021
+          readinessProbe:
+            httpGet: { path: /healthz/ready, port: readiness }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: gateway

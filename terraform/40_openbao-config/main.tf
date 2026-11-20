@@ -51,6 +51,16 @@ locals {
       operator = local.app_secrets.tunnelrs.operator_key
       ctl      = local.app_secrets.tunnelrs.ctl_key
     }
+    "agents/home-assistant" = {
+      token = local.app_secrets.agents.home_assistant_token
+    }
+    "agents/grafana" = {
+      token = local.app_secrets.agents.grafana_token
+    }
+    "agents/gateway" = {
+      session_key       = random_bytes.agents_gateway_session_key.hex
+      grafana_mcp_token = random_password.agents_grafana_mcp_token.result
+    }
   }
 
   namespace_policies = {
@@ -112,6 +122,15 @@ resource "random_password" "mqtt_home_assistant" {
 
 resource "random_password" "mqtt_exporter" {
   length  = 32
+  special = false
+}
+
+resource "random_bytes" "agents_gateway_session_key" {
+  length = 32
+}
+
+resource "random_password" "agents_grafana_mcp_token" {
+  length  = 64
   special = false
 }
 

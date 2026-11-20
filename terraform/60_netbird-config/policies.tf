@@ -4,6 +4,7 @@ locals {
     kubernetes-api = netbird_group.kubernetes_api.id
     ollama         = netbird_group.ollama.id
     printer        = netbird_group.printer.id
+    mcp            = netbird_group.mcp.id
   }
 }
 

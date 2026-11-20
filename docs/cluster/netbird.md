@@ -98,10 +98,11 @@ id, deletes the built-in `Default` policy, so only the policies below exist.
 | `kubernetes-api` | the [ClusterProxy](access.md#netbird-clusterproxy) peer |
 | `ollama` | the Ollama sidecar peer |
 | `printer` | network resource `printer-lan` |
+| `mcp` | the [MCP gateway](agents.md) sidecar peer |
 
 | Policy | Direction |
 | --- | --- |
-| `admins-to-servers`, `admins-to-kubernetes-api`, `admins-to-ollama`, `admins-to-printer` | `admins` → group only |
+| `admins-to-servers`, `admins-to-kubernetes-api`, `admins-to-ollama`, `admins-to-printer`, `admins-to-mcp` | `admins` → group only |
 | `admins-to-admins` | both ways between admin devices |
 
 The DNS zone `luuk.internal` (search domain enabled) is distributed to `admins`.

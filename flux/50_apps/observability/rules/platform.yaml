@@ -122,3 +122,15 @@ spec:
           annotations:
             summary: "The iroh relay on the edge is unreachable; tunnelrs connectors cannot reach the tunnelrs server through it"
             description: "Relayed connections and new connections fail; connections already on a direct path keep working. PublicEndpointDown fires for the same probe."
+    - name: agents
+      labels:
+        group: platform
+      rules:
+        - alert: AgentsWorkloadDown
+          expr: max by (deployment) (kube_deployment_status_replicas_available{namespace="agents"}) < 1 or absent(kube_deployment_status_replicas_available{namespace="agents",deployment="gateway"})
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "agents/{{ $labels.deployment }} has no available replica"
+            description: "Without the gateway agents have no MCP access to the infra; without an upstream its tools are missing from the gateway."

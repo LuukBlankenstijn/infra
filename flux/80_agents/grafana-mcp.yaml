@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-mcp
+  namespace: agents
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: grafana-mcp }
+  template:
+    metadata:
+      labels: { app: grafana-mcp, agents.luukblankenstijn.nl/role: upstream }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 999
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: mcp-grafana
+          image: docker.io/grafana/mcp-grafana:2.3.0
+          command: ["/app/mcp-grafana"]
+          args:
+            - --transport=streamable-http
+            - --address=0.0.0.0:8000
+            - --allowed-hosts=grafana-mcp.agents.svc:8000
+            - --metrics
+            - --metrics-address=:9090
+            - --healthz-address=:9090
+            - --disable-write
+            - --enable-write-tools=update_dashboard,create_folder,create_annotation,update_annotation,delete_annotation,alerting_silences_write
+            - --disable-oncall
+            - --disable-incident
+            - --disable-asserts
+            - --disable-pyroscope
+            - --disable-tempo
+            - --disable-rendering
+            - --disable-snapshot
+            - --disable-provisioning
+            - --disable-api
+            - --disable-plugin
+          env:
+            - name: GRAFANA_URL
+              value: http://grafana.observability.svc
+            - name: GRAFANA_SERVICE_ACCOUNT_TOKEN
+              valueFrom:
+                secretKeyRef: { name: grafana-mcp, key: grafana_token }
+            - name: MCP_GRAFANA_SERVER_TOKEN
+              valueFrom:
+                secretKeyRef: { name: grafana-mcp, key: server_token }
+          ports:
+            - name: mcp
+              containerPort: 8000
+            - name: metrics
+              containerPort: 9090
+          readinessProbe:
+            httpGet: { path: /healthz, port: metrics }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-mcp
+  namespace: agents
+spec:
+  selector: { app: grafana-mcp }
+  ports:
+    - name: mcp
+      port: 8000
+      targetPort: mcp

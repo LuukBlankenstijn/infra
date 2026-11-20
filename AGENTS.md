@@ -70,6 +70,11 @@ A new group needs a route and receiver in
 - Flux syncs `main`. After a push:
   `kubectl -n flux-system annotate gitrepository flux-system reconcile.fluxcd.io/requestedAt="$(date +%s)" --overwrite`.
   A failing HelmRelease blocks its whole layer.
+- The MCP server `infra` (`.omp/mcp.json`, see `docs/cluster/agents.md`) is the
+  way to operate Home Assistant, Grafana, Flux and the cluster at runtime. Fix
+  Flux-managed objects in git; the cluster refuses agent edits to them unless
+  annotated `agents.luukblankenstijn.nl/flux-override`. Alert rules belong in
+  `rules/*.yaml`, never in Grafana.
 - NixOS hosts deploy themselves with comin from `main`. Release jumps: use
   `nixos-rebuild boot` and reboot, not `switch`.
 - `nix flake check` must pass (CI runs it and builds every host).

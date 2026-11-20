@@ -16,6 +16,7 @@ with `prune: true`, `wait: true` and ordering only through `dependsOn`:
 | `apps` | `flux/50_apps` | `services` |
 | `netbird-operator` | `flux/60_netbird-operator` | `apps` |
 | `access` | `flux/70_access` | `netbird-operator` |
+| `agents` | `flux/80_agents` | `access` |
 
 ## Contents
 
@@ -29,6 +30,7 @@ with `prune: true`, `wait: true` and ordering only through `dependsOn`:
 | `50_apps` | the applications listed on the [home page](../index.md#applications), the [observability stack](../observability/index.md) and its device ingest (TLSOption and CA Secret in namespace `traefik`) |
 | `60_netbird-operator` | netbird-operator and its API key |
 | `70_access` | ClusterProxy `home`, the `admins` ClusterRoleBinding, the Ollama SetupKey and SidecarProfile |
+| `80_agents` | the [MCP gateway](agents.md) for AI agents, its MCP servers and admission policies |
 
 ## Rules
 
@@ -38,10 +40,10 @@ with `prune: true`, `wait: true` and ordering only through `dependsOn`:
 - A secret never sits in a layer that depends on the layer consuming it.
 - `netbird-operator` comes after `apps` because its API key is only available
   once NetBird runs. Everything that needs the operator's CRDs (ClusterProxy,
-  SetupKey, SidecarProfile) lives in `access`.
-- `access` reads `SetupKey` health from its `Ready` condition only: netbird-operator
-  never advances `status.observedGeneration` after the first reconcile, so the
-  default health check would wait forever.
+  SetupKey, SidecarProfile) lives in `access` or a later layer.
+- `access` and `agents` read `SetupKey` health from its `Ready` condition only:
+  netbird-operator never advances `status.observedGeneration` after the first
+  reconcile, so the default health check would wait forever.
 - Layer directories have no `kustomization.yaml`; Flux generates one from every
   manifest below the path. A subdirectory that needs a generator
   (`20_controllers/snapshot-controller`) carries its own.

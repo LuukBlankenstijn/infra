@@ -1,0 +1,25 @@
+apiVersion: netbird.io/v1alpha1
+kind: SetupKey
+metadata:
+  name: gateway-sidecar
+  namespace: agents
+spec:
+  name: mcp-gateway-sidecar
+  ephemeral: true
+  allowExtraDnsLabels: true
+  autoGroups:
+    - name: mcp
+---
+apiVersion: netbird.io/v1alpha1
+kind: SidecarProfile
+metadata:
+  name: gateway
+  namespace: agents
+spec:
+  setupKeyRef:
+    name: gateway-sidecar
+  podSelector:
+    matchLabels:
+      netbird-peer: mcp
+  extraDNSLabels:
+    - mcp

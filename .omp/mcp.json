@@ -1,0 +1,12 @@
+{
+	"$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
+	"mcpServers": {
+		"infra": {
+			"type": "http",
+			"url": "http://mcp.peers.luuk.internal:3000/mcp",
+			"oauth": {
+				"clientId": "mcp"
+			}
+		}
+	}
+}

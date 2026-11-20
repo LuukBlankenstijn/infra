@@ -1,0 +1,106 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: agents-flux-owned
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["*"]
+        apiVersions: ["*"]
+        resources: ["*"]
+        operations: ["UPDATE", "DELETE"]
+  matchConditions:
+    - name: agents
+      expression: request.userInfo.username.startsWith("system:serviceaccount:agents:")
+  variables:
+    - name: target
+      expression: "request.operation == 'DELETE' ? oldObject : object"
+    - name: labels
+      expression: "has(variables.target.metadata.labels) ? variables.target.metadata.labels : {}"
+    - name: owner
+      expression: >-
+        'kustomize.toolkit.fluxcd.io/name' in variables.labels
+        ? 'Kustomization ' + variables.labels['kustomize.toolkit.fluxcd.io/namespace'] + '/' + variables.labels['kustomize.toolkit.fluxcd.io/name']
+        : 'helm.toolkit.fluxcd.io/name' in variables.labels
+        ? 'HelmRelease ' + variables.labels['helm.toolkit.fluxcd.io/namespace'] + '/' + variables.labels['helm.toolkit.fluxcd.io/name']
+        : ''
+    - name: overridden
+      expression: >-
+        has(variables.target.metadata.annotations)
+        && 'agents.luukblankenstijn.nl/flux-override' in variables.target.metadata.annotations
+        && variables.target.metadata.annotations['agents.luukblankenstijn.nl/flux-override'] != ''
+    - name: specUnchangedExceptSuspend
+      expression: >-
+        request.operation == 'UPDATE'
+        && has(object.spec) == has(oldObject.spec)
+        && (!has(object.spec)
+          || (object.spec.all(k, k == 'suspend' || (k in oldObject.spec && object.spec[k] == oldObject.spec[k]))
+            && oldObject.spec.all(k, k == 'suspend' || k in object.spec)))
+    - name: restartOnly
+      expression: >-
+        request.operation == 'UPDATE'
+        && has(object.spec) && has(object.spec.template) && has(oldObject.spec) && has(oldObject.spec.template)
+        && object.spec.template.spec == oldObject.spec.template.spec
+        && (has(object.spec.replicas) ? object.spec.replicas : 1) == (has(oldObject.spec.replicas) ? oldObject.spec.replicas : 1)
+  validations:
+    - expression: >-
+        variables.owner == '' || variables.overridden
+        || variables.specUnchangedExceptSuspend || variables.restartOnly
+      messageExpression: >-
+        'This object is managed by Flux (' + variables.owner + ') and Flux reverts the change at its next reconcile.
+        Make the change in the repository instead. For a deliberate hotfix, suspend the owner, then set annotation
+        agents.luukblankenstijn.nl/flux-override to the reason on this object'
+        + (request.operation == 'DELETE' ? ' before deleting it.' : ' in the same change.')
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: agents-flux-owned
+spec:
+  policyName: agents-flux-owned
+  validationActions: ["Deny"]
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: agents-data-deletion
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["*"]
+        resources: ["namespaces", "persistentvolumes", "persistentvolumeclaims"]
+        operations: ["DELETE"]
+      - apiGroups: ["apiextensions.k8s.io"]
+        apiVersions: ["*"]
+        resources: ["customresourcedefinitions"]
+        operations: ["DELETE"]
+      - apiGroups: ["postgresql.cnpg.io"]
+        apiVersions: ["*"]
+        resources: ["clusters"]
+        operations: ["DELETE"]
+      - apiGroups: ["k8s.mariadb.com"]
+        apiVersions: ["*"]
+        resources: ["mariadbs"]
+        operations: ["DELETE"]
+      - apiGroups: ["longhorn.io"]
+        apiVersions: ["*"]
+        resources: ["volumes"]
+        operations: ["DELETE"]
+  matchConditions:
+    - name: agents
+      expression: request.userInfo.username.startsWith("system:serviceaccount:agents:")
+  validations:
+    - expression: "false"
+      messageExpression: >-
+        'Agents may not delete ' + request.resource.resource + ': this loses data. Ask the user to do it by hand.'
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: agents-data-deletion
+spec:
+  policyName: agents-data-deletion
+  validationActions: ["Deny"]

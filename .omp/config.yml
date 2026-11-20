@@ -1,0 +1,5 @@
+tools:
+  approval:
+    mcp__infra_kubernetes_pods_exec: prompt
+    mcp__infra_flux_delete_kubernetes_resource: prompt
+    mcp__infra_flux_suspend_flux_reconciliation: prompt

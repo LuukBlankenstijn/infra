@@ -21,6 +21,7 @@ and the OpenTofu roots that configure what runs on them.
 | Secret storage and delivery into namespaces | [OpenBao](cluster/openbao.md), [Secrets](cluster/secrets.md) |
 | Mesh VPN, login, Kubernetes API over the mesh | [NetBird](cluster/netbird.md) |
 | Services published through NetBird | [NetBird reverse proxy](cluster/reverse-proxy.md) |
+| AI agent access to Home Assistant, Grafana, Flux and Kubernetes | [MCP gateway](cluster/agents.md) |
 | The 3D printer's Wi-Fi on home-gateway, Home Assistant and slicer access | [3D printer](apps/printer.md) |
 | Exposing services on devices outside the cluster through tunnelrs | [tunnelrs](apps/tunnelrs.md) |
 | Shared database servers | [Postgres](databases/postgres.md), [MariaDB](databases/mariadb.md) |

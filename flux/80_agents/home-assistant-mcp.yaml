@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: home-assistant-mcp
+  namespace: agents
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: home-assistant-mcp }
+  template:
+    metadata:
+      labels: { app: home-assistant-mcp, agents.luukblankenstijn.nl/role: upstream }
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: ha-mcp
+          image: ghcr.io/homeassistant-ai/ha-mcp:9.2.0
+          command: ["ha-mcp-web"]
+          env:
+            - name: HOMEASSISTANT_URL
+              value: http://home-assistant.home-assistant.svc
+            - name: HOMEASSISTANT_TOKEN
+              valueFrom:
+                secretKeyRef: { name: home-assistant-mcp, key: token }
+            - name: MCP_PORT
+              value: "8086"
+            - name: MCP_HEALTHZ
+              value: "true"
+            - name: HA_MCP_DISABLE_SETTINGS_UI
+              value: "1"
+          ports:
+            - name: mcp
+              containerPort: 8086
+          readinessProbe:
+            httpGet: { path: /healthz, port: mcp }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /home/mcpuser/.ha-mcp
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: home-assistant-mcp
+  namespace: agents
+spec:
+  selector: { app: home-assistant-mcp }
+  ports:
+    - name: mcp
+      port: 8086
+      targetPort: mcp

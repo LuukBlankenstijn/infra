@@ -17,3 +17,7 @@ resource "netbird_group" "ollama" {
 resource "netbird_group" "printer" {
   name = "printer"
 }
+
+resource "netbird_group" "mcp" {
+  name = "mcp"
+}

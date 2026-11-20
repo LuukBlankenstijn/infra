@@ -54,9 +54,11 @@ The MQTT integration is set up once in the UI: broker
 zigbee2mqtt publishes Home Assistant discovery under `homeassistant/`.
 
 Automations, scripts, helpers and dashboards are managed in the UI and live on
-the volume, not in git. A long-lived access token for scripted changes through
-the API lives in OpenBao `secret/home-assistant/agent-token` (`token`); reach the
-API with `kubectl -n home-assistant port-forward svc/home-assistant 18123:80`.
+the volume, not in git. Agents change them through the
+[MCP gateway](../cluster/agents.md). Its long-lived access token is
+`agents.home_assistant_token` in `secrets/apps.yaml`, copied to OpenBao
+`secret/agents/home-assistant`; for direct API calls reach the API with
+`kubectl -n home-assistant port-forward svc/home-assistant 18123:80`.
 
 The sunrise wake-up starts at `input_datetime.wake_up_time` minus
 `input_number.wake_up_light_duration` (template helper
