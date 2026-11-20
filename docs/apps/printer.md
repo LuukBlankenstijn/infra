@@ -171,11 +171,12 @@ upload), then press Start now or set Start at and switch Scheduled on.
 minutes for the printer to be online and `idle`, turns the chamber light on,
 waits up to 30 s for it to report `on` and 5 s for the camera's exposure, and
 asks `ai_task.generate_data` twice, 10 s apart, whether the bed is `empty`,
-`occupied` or `unsure`. Two times `empty` with the light on starts the file with
-`elegoo_printer.start_print`. Anything else, a light that never came on included,
-sends a notification with the camera image and Start anyway / Cancel actions;
-without an answer in 15 minutes the job is cancelled. Every outcome ends in a
-notification.
+`occupied` or `unsure`. With `input_boolean.printer_auto_start` ("Start on
+empty bed") on, two times `empty` with the light on starts the file with
+`elegoo_printer.start_print`. Anything else, a light that never came on and
+auto start being off included, sends a notification with the camera image, the
+verdict and Start anyway / Cancel actions; without an answer in 15 minutes the
+job is cancelled. Every outcome ends in a notification.
 
 | Automation | Does |
 | --- | --- |
