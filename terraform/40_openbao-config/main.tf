@@ -54,9 +54,6 @@ locals {
     "agents/home-assistant" = {
       token = local.app_secrets.agents.home_assistant_token
     }
-    "agents/grafana" = {
-      token = local.app_secrets.agents.grafana_token
-    }
     "agents/gateway" = {
       session_key       = random_bytes.agents_gateway_session_key.hex
       grafana_mcp_token = random_password.agents_grafana_mcp_token.result
