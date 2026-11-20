@@ -67,9 +67,6 @@ spec:
     spec:
       automountServiceAccountToken: false
       securityContext:
-        runAsUser: 65532
-        runAsGroup: 65532
-        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -93,6 +90,9 @@ spec:
           readinessProbe:
             httpGet: { path: /healthz/ready, port: readiness }
           securityContext:
+            runAsUser: 65532
+            runAsGroup: 65532
+            runAsNonRoot: true
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities:
