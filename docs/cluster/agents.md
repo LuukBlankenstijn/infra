@@ -28,6 +28,9 @@ whose redirect URIs accept any `http://localhost:<port>/callback` or
 `http://127.0.0.1:<port>/callback`. Other MCP clients use the same URL with
 client ID `mcp`.
 
+`.omp/config.yml` makes omp ask before `kubernetes_pods_exec`,
+`flux_delete_kubernetes_resource` and `flux_suspend_flux_reconciliation`.
+
 ## Gateway
 
 Deployment `gateway`, `cr.agentgateway.dev/agentgateway`, config in ConfigMap
@@ -59,7 +62,7 @@ gateway, and to port 9090 from namespace `observability`.
 | --- | --- | --- | --- |
 | `homeassistant` | `home-assistant-mcp`, `ghcr.io/homeassistant-ai/ha-mcp` (`ha-mcp-web`, port 8086) | Home Assistant long-lived token, `secret/agents/home-assistant` | everything the token's user can: entities, automations, scripts, helpers, dashboards, history. The settings UI is off |
 | `grafana` | `grafana-mcp`, `grafana/mcp-grafana` (streamable HTTP, port 8000) | Grafana service account `mcp` (Editor), `secret/agents/grafana`; callers must present `grafana_mcp_token` from `secret/agents/gateway`, which the gateway sends | queries against Mimir and Loki, dashboards, folders, annotations, alert silences. `--disable-write` with exceptions `update_dashboard`, `create_folder`, the annotation tools and `alerting_silences_write`; no datasource or Grafana alert rule changes |
-| `flux` | HelmRelease `flux-operator-mcp` (port 9090), ServiceAccount bound to `cluster-admin` by the chart | none | Flux status, trace, diff, reconcile, suspend, resume; get, apply, patch and delete any object; logs and events. Secret values are masked |
+| `flux` | HelmRelease `flux-operator-mcp` (port 9090) with chart RBAC off; its ServiceAccount is bound to `view` and to ClusterRole `agents-operator` (`flux-mcp.yaml`): all verbs on core resources except Secrets and `pods/exec`, and on the workload, Flux and operator CRD groups listed there; read-only on CRDs, storage, admission policies and RBAC | none | Flux status, trace, diff, reconcile, suspend, resume; get, apply, patch and delete objects in those groups; logs and events. Secret values are masked. A CRD group missing from `agents-operator` is read-only for agents |
 | `kubernetes` | `kubernetes-mcp`, `quay.io/containers/kubernetes_mcp_server` (port 8080) | ServiceAccount `kubernetes-mcp`, ClusterRole `agents-kubernetes-mcp` | only `pods_exec`, `pods_top`, `nodes_top`, `nodes_stats_summary`, `nodes_log`; Secrets denied |
 
 Dashboards that agents create live in Grafana's database, like those made in
@@ -71,7 +74,7 @@ Two ValidatingAdmissionPolicies apply to every ServiceAccount in `agents`:
 
 | Policy | Effect |
 | --- | --- |
-| `agents-flux-owned` | denies UPDATE and DELETE of objects labelled `kustomize.toolkit.fluxcd.io/name` or `helm.toolkit.fluxcd.io/name`, naming the owning Kustomization or HelmRelease and telling the agent to change git. Allowed anyway: changes that leave `spec` alone or only change `spec.suspend` (reconcile annotations, suspend, resume), rollout restarts (only pod template metadata changes), and any change to an object whose annotation `agents.luukblankenstijn.nl/flux-override` holds a reason. For a delete, the annotation must be set first |
+| `agents-flux-owned` | denies UPDATE and DELETE of objects whose current labels include `kustomize.toolkit.fluxcd.io/name` or `helm.toolkit.fluxcd.io/name`, naming the owning Kustomization or HelmRelease and telling the agent to change git. Allowed anyway: updates that leave `spec`, `data`, `binaryData` and `stringData` alone apart from `spec.suspend` (reconcile annotations, suspend, resume), rollout restarts (only pod template metadata changes), and an update that sets annotation `agents.luukblankenstijn.nl/flux-override` to a reason different from the one already on the object, so every hotfix needs its own reason. A delete needs the annotation set first |
 | `agents-data-deletion` | denies deleting Namespaces, PersistentVolumes, PersistentVolumeClaims, CRDs, CNPG `Cluster`s, `MariaDB`s and Longhorn `Volume`s |
 
 The override is deliberate: a hotfix suspends the owner, then patches with the

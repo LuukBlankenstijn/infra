@@ -14,10 +14,8 @@ spec:
     - name: agents
       expression: request.userInfo.username.startsWith("system:serviceaccount:agents:")
   variables:
-    - name: target
-      expression: "request.operation == 'DELETE' ? oldObject : object"
     - name: labels
-      expression: "has(variables.target.metadata.labels) ? variables.target.metadata.labels : {}"
+      expression: "has(oldObject.metadata.labels) ? oldObject.metadata.labels : {}"
     - name: owner
       expression: >-
         'kustomize.toolkit.fluxcd.io/name' in variables.labels
@@ -25,14 +23,25 @@ spec:
         : 'helm.toolkit.fluxcd.io/name' in variables.labels
         ? 'HelmRelease ' + variables.labels['helm.toolkit.fluxcd.io/namespace'] + '/' + variables.labels['helm.toolkit.fluxcd.io/name']
         : ''
+    - name: oldReason
+      expression: >-
+        has(oldObject.metadata.annotations) && 'agents.luukblankenstijn.nl/flux-override' in oldObject.metadata.annotations
+        ? oldObject.metadata.annotations['agents.luukblankenstijn.nl/flux-override'] : ''
+    - name: newReason
+      expression: >-
+        request.operation == 'UPDATE' && has(object.metadata.annotations)
+        && 'agents.luukblankenstijn.nl/flux-override' in object.metadata.annotations
+        ? object.metadata.annotations['agents.luukblankenstijn.nl/flux-override'] : ''
     - name: overridden
       expression: >-
-        has(variables.target.metadata.annotations)
-        && 'agents.luukblankenstijn.nl/flux-override' in variables.target.metadata.annotations
-        && variables.target.metadata.annotations['agents.luukblankenstijn.nl/flux-override'] != ''
+        request.operation == 'DELETE'
+        ? variables.oldReason != ''
+        : variables.newReason != '' && variables.newReason != variables.oldReason
     - name: specUnchangedExceptSuspend
       expression: >-
         request.operation == 'UPDATE'
+        && ['data', 'binaryData', 'stringData'].all(f,
+          (f in object) == (f in oldObject) && (!(f in object) || object[f] == oldObject[f]))
         && has(object.spec) == has(oldObject.spec)
         && (!has(object.spec)
           || (object.spec.all(k, k == 'suspend' || (k in oldObject.spec && object.spec[k] == oldObject.spec[k]))
@@ -50,7 +59,7 @@ spec:
       messageExpression: >-
         'This object is managed by Flux (' + variables.owner + ') and Flux reverts the change at its next reconcile.
         Make the change in the repository instead. For a deliberate hotfix, suspend the owner, then set annotation
-        agents.luukblankenstijn.nl/flux-override to the reason on this object'
+        agents.luukblankenstijn.nl/flux-override to a new reason on this object'
         + (request.operation == 'DELETE' ? ' before deleting it.' : ' in the same change.')
 ---
 apiVersion: admissionregistration.k8s.io/v1
