@@ -105,9 +105,12 @@ the camera needs it while printing. The Printer view controls it directly.
 
 Entities are named `*.room_3d_printer_*`; the camera is
 `camera.room_3d_printer_chamber_camera`. The dashboard `dashboard-home` has a
-view `printer` (camera, print status and controls, temperatures and fans, failure
-detection, power), edited through the UI or the websocket API like the rest of
-the dashboard.
+view `printer` (camera, print job, print status and controls, temperatures and
+fans, failure detection, power), edited through the UI or the websocket API like
+the rest of the dashboard. Every card and badge for a `*.room_3d_printer_*`
+entity, the Camera section and the Temperatures heading are only visible while
+`sensor.room_3d_printer_print_status` is not `unavailable` or `unknown`, so a
+switched-off printer leaves the power, job, failure-detection and plug cards.
 
 ## Power
 
