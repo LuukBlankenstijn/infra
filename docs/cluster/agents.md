@@ -50,6 +50,10 @@ The pod carries label `netbird-peer: mcp`. SidecarProfile `agents/gateway`
 injects a NetBird client with setup key `agents/gateway-sidecar` (ephemeral,
 auto-group `mcp`, extra DNS label `mcp`), so the gateway is the peer
 `mcp.peers.luuk.internal`; policy `admins-to-mcp` lets `admins` reach it. The
+sidecar runs as root to create its WireGuard interface, so the pod has no
+pod-level `runAsUser`; agentgateway sets its non-root user per container.
+The webhook only injects at pod creation: a pod created before the
+SidecarProfile existed needs a restart. The
 protected-resource metadata names `http://mcp.peers.luuk.internal:3000/mcp`, so
 the gateway must be reached by that name.
 
