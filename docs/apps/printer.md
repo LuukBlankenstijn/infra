@@ -177,8 +177,11 @@ empty bed") on, two times `empty` with the light on starts the file with
 auto start being off included, sends a notification with the camera image, the
 verdict and Start anyway / Cancel actions, titled "Bed looks empty, confirm
 start" when both checks said `empty` and "Bed not clear, print waiting"
-otherwise; without an answer in 15 minutes the job is cancelled. Every outcome
-ends in a notification.
+otherwise; without an answer in 15 minutes the job is cancelled. While the script
+runs, the Print job section shows Start anyway and Cancel job tiles
+(`script.printer_job_start`, `script.printer_job_cancel`), which fire the event
+`printer_job_answer` the script also waits for, so a dismissed notification does
+not strand the job. Every outcome ends in a notification.
 
 | Automation | Does |
 | --- | --- |
