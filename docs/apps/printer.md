@@ -165,7 +165,7 @@ upload), then press Start now or set Start at and switch Scheduled on.
 | `input_boolean.printer_scheduled` | arms the schedule; switched off when it fires |
 | `input_boolean.printer_leveling` | auto bed leveling before the print |
 | `input_boolean.printer_auto_off` | power off after a print |
-| `input_text.printer_bed_check` | the last bed check: both verdicts and the reason |
+| `input_text.printer_bed_check` | the last bed check: both verdicts and the reason, prefixed with `Waiting for confirmation until HH:MM`, `Started anyway` or `Cancelled` when the job asked for confirmation |
 
 `script.printer_start_job` switches `switch.printer_power` on, waits up to 10
 minutes for the printer to be online and `idle`, turns the chamber light on,
@@ -175,8 +175,10 @@ asks `ai_task.generate_data` twice, 10 s apart, whether the bed is `empty`,
 empty bed") on, two times `empty` with the light on starts the file with
 `elegoo_printer.start_print`. Anything else, a light that never came on and
 auto start being off included, sends a notification with the camera image, the
-verdict and Start anyway / Cancel actions; without an answer in 15 minutes the
-job is cancelled. Every outcome ends in a notification.
+verdict and Start anyway / Cancel actions, titled "Bed looks empty, confirm
+start" when both checks said `empty` and "Bed not clear, print waiting"
+otherwise; without an answer in 15 minutes the job is cancelled. Every outcome
+ends in a notification.
 
 | Automation | Does |
 | --- | --- |
