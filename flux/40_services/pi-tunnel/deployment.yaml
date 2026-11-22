@@ -86,6 +86,24 @@ data:
     keepTunnelOpen = true
     fallbackTo = "printer-camera-relay"
     fallbackTimeoutMs = 1000
+
+    [[visitors]]
+    name = "corner-sensor-relay"
+    type = "stcp"
+    serverName = "corner-sensor"
+    secretKey = "{{ .Envs.PI_TUNNEL_SECRET_KEY }}"
+    bindPort = -1
+
+    [[visitors]]
+    name = "corner-sensor"
+    type = "xtcp"
+    serverName = "corner-sensor-p2p"
+    secretKey = "{{ .Envs.PI_TUNNEL_SECRET_KEY }}"
+    bindAddr = "0.0.0.0"
+    bindPort = 6053
+    keepTunnelOpen = true
+    fallbackTo = "corner-sensor-relay"
+    fallbackTimeoutMs = 1000
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -127,6 +145,8 @@ spec:
               containerPort: 10080
             - name: printer-camera
               containerPort: 18080
+            - name: corner-sensor
+              containerPort: 6053
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -179,6 +199,19 @@ spec:
     - name: camera
       port: 8080
       targetPort: printer-camera
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: corner-sensor
+  namespace: pi-tunnel
+spec:
+  selector:
+    app: frpc
+  ports:
+    - name: esphome
+      port: 6053
+      targetPort: corner-sensor
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute

@@ -1,6 +1,7 @@
 { config, lib, ... }:
 let
-  printer = (import ./printer-network.nix).printer;
+  net = import ./printer-network.nix;
+  printer = net.printer;
   targets = {
     zigbee2mqtt = {
       localIP = "127.0.0.1";
@@ -17,6 +18,10 @@ let
     printer-camera = {
       localIP = printer;
       localPort = 8080;
+    };
+    corner-sensor = {
+      localIP = net.cornerSensor;
+      localPort = 6053;
     };
   };
   proxies = lib.concatLists (

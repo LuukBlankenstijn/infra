@@ -21,6 +21,7 @@ in
     networks = lib.genAttrs ssids (ssid: {
       authProtocols = [ "WPA-PSK" ];
       pskRaw = "ext:${pskName ssid}";
+      extraConfig = "freq_list=2412 2437 2462";
     });
   };
 

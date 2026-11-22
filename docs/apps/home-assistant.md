@@ -125,8 +125,13 @@ port is opened on the edge and nothing listens publicly.
 | `printer-mqtt` | `10.77.0.10:1883` | 1883 | `pi-tunnel/printer:1883` |
 | `printer-upload` | `10.77.0.10:80` | 10080 | `pi-tunnel/printer:80` |
 | `printer-camera` | `10.77.0.10:8080` | 18080 | `pi-tunnel/printer:8080` |
+| `corner-sensor` | `10.77.0.11:6053` | 6053 | `pi-tunnel/corner-sensor:6053` |
 
 The printer targets reach the [3D printer](printer.md) on the Pi's access point.
+`corner-sensor` is the ESPHome API of the Corner Sensor (Pico W) on the same
+access point; Home Assistant's ESPHome integration connects to
+`corner-sensor.pi-tunnel.svc:6053` with the API encryption key from
+`sensor-box/firmware/secrets.yaml` in the `home-assistant` repo.
 
 A new target is one entry in `targets` in `frp.nix`, two visitors in
 `flux/40_services/pi-tunnel/deployment.yaml`, a container port and a Service

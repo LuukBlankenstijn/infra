@@ -38,17 +38,17 @@ Home Assistant uses one MQTT slot, the slicer two (1883 and 9001).
 `nix/hosts/home-gateway/printer.nix`, addresses in `printer-network.nix`.
 
 The Pi 4's radio runs one client and one access point only on a single channel,
-so the access point `uap0` always takes `wlan0`'s channel and band; with
-CasaGooch4 that is 5 GHz channel 104 (DFS), or its 2.4 GHz band if `wlan0` lands
-there. The printer has to join on whatever band that is. While `uap0` exists the
-radio cannot scan, so `wlan0` cannot find the router again after a disconnect;
-the access point therefore runs only while `wlan0` is connected.
+so the access point `uap0` always takes `wlan0`'s channel and band. The
+CasaGooch4 uplink is restricted to 2.4 GHz channels 1, 6 and 11 so 2.4 GHz-only
+clients can use the access point. While `uap0` exists the radio cannot scan, so
+`wlan0` cannot find the router again after a disconnect; the access point
+therefore runs only while `wlan0` is connected.
 
 | Unit | Does |
 | --- | --- |
 | `printer-ap-guard.service` | the only thing that starts or stops `printer-ap`. Every 10 s: if `wlan0` is not connected it stops `printer-ap` at once and restarts `wpa_supplicant-wlan0`, which stops scanning after the scans the access point made fail. If `wlan0` is connected and its default gateway answers, it starts `printer-ap`, or restarts it when `uap0`'s frequency differs from `wlan0`'s (router changed channel or band). Counts checks without a working uplink: after 2 minutes it restarts `wpa_supplicant-wlan0`, after 4 minutes it reloads `brcmfmac`, after 6 minutes it reboots, but only when the Pi has been up for 30 minutes |
 | `printer-ap.service` | started by the guard only: requires `wlan0` to be connected and takes its frequency from `iw dev wlan0 link`, adds `uap0` (MAC derived from `wlan0`'s), sets `10.77.0.1/24`, writes `/run/printer-ap/hostapd.conf` with the passphrase from `printer-wifi-psk` and runs hostapd; WPA2-PSK, SSID `gateway` |
-| `dnsmasq.service` | DHCP on `uap0` only, no DNS. `10.77.0.10` is reserved for the printer's MAC (`printerMac` in `printer-network.nix`, `88:49:2d:75:42:2d`); any other client gets `10.77.0.100`–`10.77.0.110`. Router `10.77.0.1`, DNS `1.1.1.1`, `9.9.9.9` |
+| `dnsmasq.service` | DHCP on `uap0` only, no DNS. `10.77.0.10` is reserved for the printer's MAC (`printerMac` in `printer-network.nix`, `88:49:2d:75:42:2d`) and `10.77.0.11` for the Corner Sensor (`cornerSensorMac`, `28:cd:c1:0d:86:aa`); any other client gets `10.77.0.100`–`10.77.0.110`. Router `10.77.0.1`, DNS `1.1.1.1`, `9.9.9.9` |
 
 With DFS, hostapd logs `Wait for CAC to complete` and never `AP-ENABLED`; the
 firmware handles radar detection itself and the access point serves clients
