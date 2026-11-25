@@ -23,7 +23,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: mcp-grafana
-          image: docker.io/grafana/mcp-grafana:2.3.0
+          image: docker.io/grafana/mcp-grafana:2.4.0
           command: ["/app/mcp-grafana"]
           args:
             - --transport=streamable-http
